@@ -89,8 +89,9 @@ AWS freeRTOS is running on ESP32 board. It connects the local network to the AWS
 ESP32: ESP32 is the gateway in this project. When it runs, it continuously gets the Thing Shadow document from the AWS IoT Core, and then it translates the JSON directives to simple character strings. Through UART communication, it passes the commands to the provisioner in the Bluetooth Mesh network, and the provisioner will give the specific directives to appointed devices.
 
 ### Bluetooth mesh network:
-In this project, a simple Bluetooth network is created that includes two mesh node and of course a provisioner. The provisioner in the network to provision new devices and receive commands from ESP32 via UART, and also parse the commands from ESP32 and transfer to the mesh command and transmite it to the mesh network for controlling other nodes. 
-There are total two Bluetooth mesh nodes in the network, a light node and a switch node. Once the user presses the button on the switch node, the light node would receive a BLE mesh message and turn on/off the embedded LED on it.
+In this project, a simple Bluetooth network is created that includes two mesh node and of course a provisioner.  
+The provisioner in the network to provision new devices and receive commands from ESP32 via UART, and also parse the commands from ESP32 and transfer to the mesh command and transmite it to the mesh network for controlling other nodes.  
+There are total two Bluetooth mesh nodes in the network, a light node and a switch node. Once the user presses the button on the switch node, the light node would receive a BLE mesh message and turn on/off the embedded LED on it.  
 
 <div align="center">
   <img src="./images/wireless_gecko_btmesh_light_node.jpg">
