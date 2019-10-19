@@ -48,12 +48,16 @@ A Bluetooth mesh network is going to be controlled by an Amazon Echo Plus 2 via 
 
 ## Project Preparation:
 * Install the Alexa App in you iOS device. Note that the Alexa App is only available for some special regions, for e,g. US, you need to Login the AppStore with a special Apple ID. And below is an Apple ID hosted by APAC regional apps team, you can feel free to use it.
-   * UserName: silabs_iot_ra_apac@outlook.com
-   * Password: Register_2019
+   * UserName: silabs_iot_ra_apac@outlook.com  
+   * Password: Register_2019  
 * Register the Amazon with your own account or use the available account below. For this demonstration, we have registered the account as below.
-   * UserName: silabs_iot_ra_apac@outlook.com
-   * Password: register_2019
+   * UserName: silabs_iot_ra_apac@outlook.com  
+   * Password: register_2019  
 * Also you can / should Sign-in the Alexa App with the same account as above.
+* If Amazon requests for account verification with email, please sign in the outlook with the account below.
+   * UserName: silabs_iot_ra_apac@outlook.com  
+   * Password: register_2019  
+
 * Register AWS in https://portal.aws.amazon.com/billing/signup#/start. The AWS is used for holding the lambda function, and credit card information is needed for registering a new account of the AWS.
    * The account information for AWS is not public.
    * UserName: yuancheng@xxxxxx
@@ -115,7 +119,7 @@ In this section, the technical details below will be introduced.
 
 sample codes, including lambda function, Alexa smart home skill, ESP32 freeRTOS application, and the codes of the Bluetooth Mesh provisioner (based on EFR32BG13) will also be explained.  
 
-However, because of the limited length of this article, if the reader wants to replicate the project, please reference the section of [Replication the project](#replication-the-project) for the step by step guidance, and read the GitHub page: https://github.com/sheldon123z and find the mentioned packages accordingly.
+However, because of the limited length of this article, if the reader wants to replicate this project, please read the section of [Replication the project](#replication-the-project) for the step by step guidance, and access the GitHub page: https://github.com/sheldon123z and find the mentioned packages accordingly.
 
 ### Alexa Smart Home Skill
 Alexa smart home skill interface is designed for controlling smart home devices using Amazon Echo series smart speaker by Amazon. In this project, an Echo plus 2 was utilized to receive the voice command and transmit the voice command to the Alexa server.
@@ -131,7 +135,7 @@ if namespace == 'Alexa.Discovery':
         return send_response(adr.get())   
 ```
 
-The “```AlexaResponse()```” function is used to generate the response--- a JSON document. It uses **kwags parameter to receive whatever the user appointed attributes. Among those attributes, the “namespace” and “name” is necessary to add. Alexa server will use this information to identify what the response is and give a feedback to the user.
+The “```AlexaResponse()```” function is used to generate the response — a JSON document. It uses **kwags parameter to receive whatever the user appointed attributes. Among those attributes, the “namespace” and “name” is necessary to add. Alexa server will use this information to identify what the response is and give a feedback to the user.
 
 ```
 #create the discover response   
@@ -168,7 +172,7 @@ def create_discover_response(response):
     )       
 ```
 
-The capability and endpoint id compose the virtual representation of a smart device. One device can simultaneously own several different capabilities. For example, a light can support PowerController, ColorController, and ColorTemperatureController capabilities to control the on/off, color, and temperature attributes.
+The ```capability``` and ```endpoint``` id compose the virtual representation of a smart device. One device can simultaneously own several different capabilities. For example, a light can support PowerController, ColorController, and ColorTemperatureController capabilities to control the on/off, color, and temperature attributes.
 After constructing the capabilities of the device, we also need to add other device information and the endpoint id to the response.
 
 ```
@@ -183,7 +187,7 @@ response.add_payload_endpoint(
 
 The "```display_categories```" item will tell Alexa what type of the device is. Alexa will show the corresponding icon on the Alexa phone application.
 The discovery response is needed only once. It is similar to the process of registering the device to Alexa server. After this registration, Alexa is connected to the smart devices; the user can see the device on the Alexa application.  
-Every time Alexa gives a directive, the lambda function will respond a corresponding message to Alexa and execute the directive via changing the status of the device on the IoT core. In the lambda function, every controller interface needs a specific method to handle.
+Every time Alexa gives a directive, the lambda function will respond a corresponding message to Alexa and execute the directive via changing the status of the device on the IoT core. In the lambda function, every controller interface needs a specific method to handle.  
 
 ```
 def respond_brightnessControl_dir(request):  
@@ -209,10 +213,11 @@ def respond_brightnessControl_dir(request):
     abtr.add_context_property(namespace = 'Alexa.BrightnessController',name = "brightness",value = brightness_value)  
 ```
 
-For instance, a brightness controlling directive for light could be executed and responded by the function above. The lambda function will first analyze the directive, extract the information such as the endpoint_id, the correlation_token(which is used in response to Alexa), and the specific actions to be done. Then the lambda function will access to the IoT core, update the corresponding attribute information on the appointed virtual device using “update_thing_shadow” function. If the updating action is done successfully, lambda will give an acknowledging response to Alexa; else it will give an ErrorResponse. 
+For instance, a brightness controlling directive for light could be executed and responded by the function above. The lambda function will first analyze the directive, extract the information such as the ```endpoint_id```, the ```correlation_token``` (which is used in response to Alexa), and the specific actions to be done. Then the lambda function will access to the IoT core, update the corresponding attribute information on the appointed virtual device using ```update_thing_shadow``` function. If the updating action is done successfully, lambda will give an acknowledging response to Alexa; else it will give an ```ErrorResponse```.  
 
-As mentioned above, the Lambda function is the place to hold Alexa skill. The codes in the lambda function are basically the essence of the Alexa skill. However, to associate a Lambda function and an Alexa smart home skill, several steps need to be done.
-First, create an Alexa smart home skill on [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill). 
+As mentioned above, the **Lambda function** is the place to hold **Alexa skill**. The codes in the lambda function are basically the essence of the Alexa skill. However, to associate a Lambda function and an Alexa smart home skill, several steps need to be done.
+
+Firstly, create an Alexa smart home skill on [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill). 
 https://developer.amazon.com/alexa/console/ask/create-new-skill
 * Fill the Skill name, for instance, silabs_apac_alexa_btmesh_demo
 * Select the “Smart Home” and click “Create skill” button in the top right of this page.
@@ -220,6 +225,11 @@ https://developer.amazon.com/alexa/console/ask/create-new-skill
 <div align="center">
   <img src="./images/create_a_new_skill.png">
 </div>
+
+<div align="center">
+  <img src="./images/create_a_new_skill_2.png">
+</div>
+
 
 At the Alexa console, the “Default endpoint” should be set as the endpoint of the lambda function. 
 Also, the skill ID should also be set on the lambda function. Therefore, the skill is associated with the lambda function.
@@ -271,7 +281,7 @@ Then the lambda function will handle the directive and give a response.
 
 The keywords “event” and “directive” on the top of the JSON file marks what the message is and where does the message from.
 Lambda function:
-As introduced before, the lambda function is the place holding Alexa skills. Every “directive” is processed and handled in the lambda function. It is quite complex to set up a lambda function, the detailed steps to set up a lambda function can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html), and the Chinese version documentation is available [here](https://docs.aws.amazon.com/zh_cn/lambda/latest/dg/getting-started.html).
+As introduced before, the **lambda function** is the place holding Alexa skills. Every “directive” is processed and handled in the lambda function. It is quite complex to set up a lambda function, the detailed steps to set up a lambda function can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html), and the Chinese version documentation is available [here](https://docs.aws.amazon.com/zh_cn/lambda/latest/dg/getting-started.html).
 The lambda function has multiple servers in different areas of the world. However, some of them don’t support Alexa smart home skills. This project chooses **US East(N.Virgina)** server to hold the skill.
 
 <div align="center">
@@ -380,10 +390,14 @@ In this section, a step-by-step instruction will be provided to the reader to re
 
 ## Procedures:
 ## 1.	Configure the AWS IoT core settings: 
-a.	Please carefully read the [documentation page](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-getting-started.html) on how to setup the AWS freeRTOS SDK on your computer.
+<div align="center">
+  <img src="./images/replicate_step1.png">
+</div>  
+</br>
+
+a.	Please carefully read the [documentation page](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-getting-started.html) on how to setup the AWS freeRTOS SDK on your computer. The chinese version documentation is available [here]((https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-getting-started.html)).
 b.	[Setting up your AWS Account and Permissions](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-account-and-permissions.html), this step gives you right to access AWS IoT console
-c.	Log into AWS IoT console, open the services and choose **N.Virginia** as the server 
-https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard
+c.	Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Below is the screenshot if you log into the AWS IoT console successfully.
 
 <div align="center">
   <img src="./images/aws_iot_console.png">
@@ -391,22 +405,25 @@ https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard
 </div>  
 
 d.	Create a thing called “esp32” on your AWS console: 
-click Manage -> Thing -> Register a thing -> CreateCreate a Single thingCreate certificate -> Download the certificate and Activate. 
-Carefully preserve the thing certificates downloaded. 
+click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> Create certificate -> Download the certificate and Activate. 
+**Note**: Carefully preserve the thing certificates downloaded. 
 
 <div align="center">
   <img src="./images/create_a_thing.png">
   <center> <b>Figure: Create a thing</b> </center>
 </div>  
+</br>
 
 <div align="center">
   <img src="./images/name_the_thing_as_esp32.png">
   <center> <b>Figure: Name the thing as esp32</b> </center>
 </div>  
+</br>
 
 <div align="center">
   <img src="./images/certificate_created.png">
 </div>  
+</br>
 
 e.	Go back to the console, open your thing “esp32”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy, if you have a policy, change it to:
 f.	And also don’t forget to modify the “Resource” as the lambda of yours.
@@ -455,47 +472,144 @@ If you don’t have a policy, go back to console -> secure -> policy -> create Y
 
 g.	Click on the Manage -> Thing -> esp32 -> Shadow -> Edit, paste the initial shadow document. The initial shadow document must have the same desired and reported section, if you want to change the shadow document, remember to change the shadow document template on the esp32 board and Alexa skill, or the program won’t run correctly.
 
-
 <div align="center">
   <img src="./images/shadow_document.png">
   <center><b>Figure: Shadow document</b></center>
 </div>  
 
-*Initial Shadow document see appendix
-h.	You can try to update the shadow document in this interface, or using Test function on AWS IoT console. Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic.
+Below is the initial Shadow document utilized in this project.
+```
+{
+  "desired": {
+    "Lights": {
+      "device info": "default information",
+      "brightness": 55,
+      "value": {
+        "value": 0,
+        "hue": 0,
+        "saturation": 1,
+        "brightness": 1
+      },
+      "colorTemperatureInKelvin": 3000,
+      "ON_OFF": "OFF",
+      "LightID": "sample-light"
+    },
+    "Switch": {
+      "Switch value": "OFF"
+    },
+    "Lock": {
+      "Lock value": "LOCKED"
+    },
+    "Thing name": "sample-switch-01",
+    "color": "RED",
+    "sequence": [
+      "RED",
+      "GREEN",
+      "BLUE"
+    ]
+  },
+  "reported": {
+    "Lights": {
+      "device info": "default information",
+      "brightness": 55,
+      "value": {
+        "value": 0,
+        "hue": 0,
+        "saturation": 1,
+        "brightness": 1
+      },
+      "colorTemperatureInKelvin": 3000,
+      "ON_OFF": "OFF",
+      "LightID": "sample-light"
+    },
+    "Switch": {
+      "Switch value": "OFF"
+    },
+    "Lock": {
+      "Lock value": "LOCKED"
+    },
+    "Thing name": "sample-light",
+    "color": "GREEN"
+  },
+  "delta": {
+    "Thing name": "sample-switch-01",
+    "color": "RED",
+    "sequence": [
+      "RED",
+      "GREEN",
+      "BLUE"
+    ]
+  }
+}
+```
+
+h.	You can try to update the shadow document in this interface, or using Test function on AWS IoT console. 
+Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic. Below are the all available MQTT topics for subscribe or publish. For example, you can publish the message to the topic ```$aws/things/esp32/shadow/update``` to update the thing shadow, and subscribe to the MQTT topics ```$aws/things/esp32/shadow/update/accepted``` and ```$aws/things/esp32/shadow/update/documents``` for the accepted messages, also you can monitor the topic ```$aws/things/esp32/shadow/update/rejected``` for debugging purpose. If the message was rejected, you can get the error code by subscribing the ```$aws/things/esp32/shadow/update/rejected``` topic.
 
 <div align="center">
   <img src="./images/topic_to_subscribe.png">
   <center><b>Figure: Topic to subscribe</b></center>
 </div>  
+</br>  
 
-<div align="center">
-  <img src="./images/subscribe_the_topic_and_publish_content_you_want.png">
-  <center><b>Figure: Subscribe the topic and publish content you want</b></center>
+<div align="center">  
+  <img src="./images/subscribe_the_topic_and_publish_content_you_want.png">  
+  <center><b>Figure: Subscribe the topic and publish content you want</b></center>  
 </div>  
+</br>  
 
-##  Download and set up freeRTOS SDK:
-### Download the project
-a.	Go to GitHub page to download the SDK or clone it by using git clone https://github.com/aws/amazon-freertos.git
-b.	Setup the SDK with correct Toolchains and serial connection to your ESP32 board. The very detailed official instruction can be found [HERE](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html).
-c.	Open the SDK folder, in the folder …/demos/shadow, replace the C file “aws_iot_demo_shadow.c” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “aws_iot_shadow_blem.h” to the folder.
-d.	The WiFi settings can be done in the file …/demos/include/aws_clientcrediential.h
-e.	Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file …/demos/includes/aws_clientcrediential_keys.h
-f.	Alternatively, you can use the quick setup which instructed [on this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
+You can find an example shadow document [here](https://docs.aws.amazon.com/iot/latest/developerguide/using-device-shadows.html). When you send shadow update messages to the topic ```$aws/things/<shadow-name>/shadow/update```, please make sure it at least contains the **state** field.
 
-###	Build the esp32 program 
-a.	In the file:
-b.	…/vendors/espressif/boards/esp32/aws_demos/config_files/aws_demo_config.h input. #define CONFIG_SHADOW_DEMO_ENABLED
-c.	Follow the building instruction on the manual page to build and flash the application.
-
-### Build BG13 embedded provisioner program
-a.	Clone the project from GitHub using “git clone https://github.com/sheldon123z/EFR32-embedded-provisioner.git”
-b.	Open the project in simplicity studio, build, flash to BG13 board
-
-### Build MG21 Bluetooth mesh light/switch/sensor/sensor monitor program
-a.	The mesh light and switch are using the demo applications in the simplicity studio Bluetooth mesh SDK v1.5.0, you can use other Bluetooth mesh light device in this project.
-b.	The mesh switch application is also the demo program in simplicity studio, it has three functions: adjusting the lightness of the light, adjusting the temperature, turning on/off the light. A long press will turn on/off the light, a short press will adjust the lightness, and a normal press will change the temperature. Currently, the provisioner only subscribes the on/off function, when the user give it a short press or long press, the provisioner will report the light’s on/off status to IoT console(while the lightness is not 0, the light’s on/off state will be “ON”).
-c.	Sensor/monitor program. The sensor/monitor program is only available after the version 1.5.0 of the Bluetooth mesh SDK. Currently, the IoT console doesn’t monitor the state of the sensor. Once the sensor and the monitor are provisioned, they are functioning as local devices. 
+```
+{
+  "state": {
+    "desired": {
+      "Lights": {
+        "device info": "default information",
+        "brightness": 85,
+        "value": {
+          "value": 0,
+          "hue": 0,
+          "saturation": 1,
+          "brightness": 1
+        },
+        "colorTemperatureInKelvin": 3000,
+        "ON_OFF": "ON",
+        "LightID": "sample-light"
+      },
+      "Switch": {
+        "Switch value": "OFF"
+      },
+      "Lock": {
+        "Lock value": "LOCKED"
+      },
+      "Thing name": "sample-light"
+    },
+    "reported": {
+      "Lights": {
+        "device info": "default information",
+        "brightness": 55,
+        "value": {
+          "value": 0,
+          "hue": 0,
+          "saturation": 1,
+          "brightness": 1
+        },
+        "colorTemperatureInKelvin": 3000,
+        "ON_OFF": "OFF",
+        "LightID": "sample-light"
+      },
+      "Switch": {
+        "Switch value": "OFF"
+      },
+      "Lock": {
+        "Lock value": "LOCKED"
+      },
+      "Thing name": "sample-light"
+    }
+  }
+}
+```
 
 ###	Lambda function:
 Clone the repo https://github.com/sheldon123z/Alexa-esp32freeRTOS-EFR32BG13-Bluetooth-mesh-project.git
@@ -613,6 +727,144 @@ f.	Go to https://alexa.amazon.com/spa/index.html#skills
 <div align="center">
   <img src="./images/skill_configuration_result.png">
 </div>  
+
+##  Download and set up freeRTOS SDK on ESP32:
+### Download the project
+Go to GitHub page to download the SDK or clone it by using git clone https://github.com/aws/amazon-freertos.git
+
+### Use CMake to generate project build files
+Setup the SDK with correct Toolchains and establish the serial connection to your ESP32 board. The very detailed official instruction can be found HERE [EN](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) | [CN](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/getting_started_espressif.html).
+#### Prerequistes
+##### Install ESP-IDF 
+Read the page here [EN](https://docs.espressif.com/projects/esp-idf/en/v3.1.5/get-started-cmake/windows-setup.html) for how to get start with CMake on windows. 
+ESP-IDF is the official development framework for the ESP32 chip. Please note that due to some compatibility issue, the version 3.1.5 of ESP-IDF (the version used by Amazon FreeRTOS) does not support the latest version of the ESP32 compiler. You must use the compiler that is compatible with version 3.1.5 of the ESP-IDF. The compatible compiler is provided within the installation package ```esp-idf-tools-setup-1.1.exe```, please get the installation package from the link above.
+
+The installer will automatically install the **ESP32 Xtensa gcc toolchain**, **Ninja** build tool, and a configuration tool called **mconf-idf**. The installer can also download and run installers for CMake and Python 2.7 if these are not already installed on the computer. However, the CMake included in the installer is an elder version, for CMake installing method, please read the section [Install CMake](#install-cmake) below.
+
+<div align="center">
+<img src="./images/esp_idf_tool_setup_0.png">
+</div>  
+</br>
+
+After setup has finished installing ESP-IDF tools, the GUI now should looks like this. 
+   
+<div align="center">
+<img src="./images/esp_idf_tool_setup.png">
+</div>  
+</br>
+
+Click the **Finish** button, ESP-IDF will set the system environment automatically.
+<div align="center">
+<img src="./images/esp_idf_tool_set_environment.png">
+</div>  
+</br>  
+
+By default, the installer updates the Windows Path environment variable so all of these tools can be run from anywhere.
+<div align="center">
+<img src="./images/installer_update_path_environment.png">
+</div>  
+</br>  
+
+If you didn't see these path included in the System Environment, you will need to configure the environment where you are using ESP-IDF with the correct paths by yourself.
+
+##### Install CMake
+
+Install the CMake (Cross-Platform Makefile Generator). The CMake build system is required to build the Amazon FreeRTOS demo and test applications for this device. Amazon FreeRTOS supports versions 3.13 and later.
+
+Form you native build system, it can be GNU Make or Ninja. Ninja is recommended by Amazon since it is faster than Make and also provides native support to all desktop operating systems. And we also use the Ninja in this project.
+
+###### Generate build file by CLI command
+Use the following CMake command to generate the build files, and then use ```ninja``` to build the application.
+```cmake -DVENDOR=espressif -DBOARD=esp32_devkitc -DCOMPILER=xtensa-esp32 -GNinja -S . -B your-build-directory```
+
+##### Generate build file by GUI tool
+Also you can use the CMake GUI tool to generate the build files, and then use ```ninja``` to build the application.
+   
+Choose Browse Source and specify the source input, and then choose Browse Build and specify the build output.
+
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration_1.png">
+  </div>  
+  </br>
+
+  Choose **Configure**, and under **Specify the build generator for this project** select **Ninja**.
+
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration_2.png">
+  </div>  
+  </br>
+
+  Choose Specify toolchain file for cross-compiling, and then choose Next. We are using ESP32 in this project, so we should select the "xtensa-esp32.cmake" as the toolchain.
+
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration_3.png">
+  </div>  
+  </br>
+
+  The click the Finish, the window below might pop-up to remind you that a error occurs in configuration process. 
+
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration_4.png">
+  </div>  
+  </br>
+
+  Please select the **AFR_BOARD** as ```espressif.esp32_devkitc``` if you are using [ESP32-DevKitC](https://docs.espressif.com/projects/esp-idf/en/latest/hw-reference/modules-and-boards.html#esp32-devkitc-v4) for this project. And then click the **Generate** to continue the process.
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration_5.png">
+  </div>  
+  </br>
+
+  Now the GUI should now look like this:
+
+  <div align="center">
+  <img src="./images/build_esp32_cmake_configuration.png">
+  </div>  
+
+   * Change directories to the build directory ```your-build-directory``` you just specified above, i.e, ```build```.
+   
+#### Flash and Run Amazon FreeRTOS
+   Use Espressif's IDF utility (<amazon-freertos>/vendors/espressif/esp-idf/tools/idf.py) to flash your board, run the application, and see logs.
+   
+   To erase the board's flash, go to the <amazon-freertos> directory and use the following command:
+   
+   ./vendors/espressif/esp-idf/tools/idf.py erase_flash -B build
+   To flash the application binary to your board, use make:
+   
+   make flash
+   You can also use the IDF script to flash your board:
+   
+   ./vendors/espressif/esp-idf/tools/idf.py flash -B build
+   To monitor:
+   
+   ./vendors/espressif/esp-idf/tools/idf.py monitor -p /dev/ttyUSB1 -B build
+   Note
+   
+   You can combine these commands. For example:
+   
+   ./vendors/espressif/esp-idf/tools/idf.py erase_flash flash monitor -p /dev/ttyUSB1 -B build   
+     
+
+### Add the custom source code
+Open the SDK folder, in the folder …/demos/shadow, replace the C file “aws_iot_demo_shadow.c” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “aws_iot_shadow_blem.h” to the folder.
+d.	The WiFi settings can be done in the file …/demos/include/aws_clientcrediential.h
+e.	Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file …/demos/includes/aws_clientcrediential_keys.h
+f.	Alternatively, you can use the quick setup which instructed [on this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
+
+###	Build the esp32 program 
+Serial connection to your ESP32 board
+a.	In the file:
+b.	…/vendors/espressif/boards/esp32/aws_demos/config_files/aws_demo_config.h input. #define CONFIG_SHADOW_DEMO_ENABLED
+c.	Follow the building instruction on the manual page to build and flash the application.
+
+## Build BG13 embedded provisioner program
+a.	Clone the project from GitHub using “git clone https://github.com/sheldon123z/EFR32-embedded-provisioner.git”
+b.	Open the project in simplicity studio, build, flash to BG13 board
+
+## Build MG21 Bluetooth mesh light/switch/sensor/sensor monitor program
+a.	The mesh light and switch are using the demo applications in the simplicity studio Bluetooth mesh SDK v1.5.0, you can use other Bluetooth mesh light device in this project.
+b.	The mesh switch application is also the demo program in simplicity studio, it has three functions: adjusting the lightness of the light, adjusting the temperature, turning on/off the light. A long press will turn on/off the light, a short press will adjust the lightness, and a normal press will change the temperature. Currently, the provisioner only subscribes the on/off function, when the user give it a short press or long press, the provisioner will report the light’s on/off status to IoT console(while the lightness is not 0, the light’s on/off state will be “ON”).
+c.	Sensor/monitor program. The sensor/monitor program is only available after the version 1.5.0 of the Bluetooth mesh SDK. Currently, the IoT console doesn’t monitor the state of the sensor. Once the sensor and the monitor are provisioned, they are functioning as local devices. 
+
 
 8.	Bluetooth mesh network operation guide:
 a.	Flash the provisioner program to the BG13 board.
