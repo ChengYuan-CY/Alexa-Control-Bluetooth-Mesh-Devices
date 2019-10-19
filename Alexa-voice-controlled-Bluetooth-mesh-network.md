@@ -732,10 +732,10 @@ f.	Go to https://alexa.amazon.com/spa/index.html#skills
 ### Download the project
 Go to GitHub page to download the SDK or clone it by using git clone https://github.com/aws/amazon-freertos.git
 
-### Use CMake to generate project build files
+### Use CMake to generate project build files and build project
 Setup the SDK with correct Toolchains and establish the serial connection to your ESP32 board. The very detailed official instruction can be found HERE [EN](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) | [CN](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/getting_started_espressif.html).
-#### Prerequistes
-##### Install ESP-IDF 
+
+#### Install ESP-IDF 
 Read the page here [EN](https://docs.espressif.com/projects/esp-idf/en/v3.1.5/get-started-cmake/windows-setup.html) for how to get start with CMake on windows. 
 ESP-IDF is the official development framework for the ESP32 chip. Please note that due to some compatibility issue, the version 3.1.5 of ESP-IDF (the version used by Amazon FreeRTOS) does not support the latest version of the ESP32 compiler. You must use the compiler that is compatible with version 3.1.5 of the ESP-IDF. The compatible compiler is provided within the installation package ```esp-idf-tools-setup-1.1.exe```, please get the installation package from the link above.
 
@@ -767,88 +767,47 @@ By default, the installer updates the Windows Path environment variable so all o
 
 If you didn't see these path included in the System Environment, you will need to configure the environment where you are using ESP-IDF with the correct paths by yourself.
 
-##### Install CMake
+#### Install CMake
 
 Install the CMake (Cross-Platform Makefile Generator). The CMake build system is required to build the Amazon FreeRTOS demo and test applications for this device. Amazon FreeRTOS supports versions 3.13 and later.
 
 Form you native build system, it can be GNU Make or Ninja. Ninja is recommended by Amazon since it is faster than Make and also provides native support to all desktop operating systems. And we also use the Ninja in this project.
 
-###### Generate build file by CLI command
+#### Generate build file by CMake
 Use the following CMake command to generate the build files, and then use ```ninja``` to build the application.
 ```cmake -DVENDOR=espressif -DBOARD=esp32_devkitc -DCOMPILER=xtensa-esp32 -GNinja -S . -B your-build-directory```
 
-##### Generate build file by GUI tool
-Also you can use the CMake GUI tool to generate the build files, and then use ```ninja``` to build the application.
-   
-Choose Browse Source and specify the source input, and then choose Browse Build and specify the build output.
+#### To build the application
+Change directories to the build directory ```your-build-directory``` you just specified above, i.e, ```build```.
+Invoke Ninja to build the application.
+```ninja```
 
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration_1.png">
-  </div>  
-  </br>
+<div align="center">
+<img src="./images/ninja_build_project.png">
+</div>  
+</br>
 
-  Choose **Configure**, and under **Specify the build generator for this project** select **Ninja**.
-
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration_2.png">
-  </div>  
-  </br>
-
-  Choose Specify toolchain file for cross-compiling, and then choose Next. We are using ESP32 in this project, so we should select the "xtensa-esp32.cmake" as the toolchain.
-
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration_3.png">
-  </div>  
-  </br>
-
-  The click the Finish, the window below might pop-up to remind you that a error occurs in configuration process. 
-
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration_4.png">
-  </div>  
-  </br>
-
-  Please select the **AFR_BOARD** as ```espressif.esp32_devkitc``` if you are using [ESP32-DevKitC](https://docs.espressif.com/projects/esp-idf/en/latest/hw-reference/modules-and-boards.html#esp32-devkitc-v4) for this project. And then click the **Generate** to continue the process.
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration_5.png">
-  </div>  
-  </br>
-
-  Now the GUI should now look like this:
-
-  <div align="center">
-  <img src="./images/build_esp32_cmake_configuration.png">
-  </div>  
-
-   * Change directories to the build directory ```your-build-directory``` you just specified above, i.e, ```build```.
-   
 #### Flash and Run Amazon FreeRTOS
-   Use Espressif's IDF utility (<amazon-freertos>/vendors/espressif/esp-idf/tools/idf.py) to flash your board, run the application, and see logs.
-   
-   To erase the board's flash, go to the <amazon-freertos> directory and use the following command:
-   
-   ./vendors/espressif/esp-idf/tools/idf.py erase_flash -B build
-   To flash the application binary to your board, use make:
-   
-   make flash
-   You can also use the IDF script to flash your board:
-   
-   ./vendors/espressif/esp-idf/tools/idf.py flash -B build
-   To monitor:
-   
-   ./vendors/espressif/esp-idf/tools/idf.py monitor -p /dev/ttyUSB1 -B build
-   Note
-   
-   You can combine these commands. For example:
-   
-   ./vendors/espressif/esp-idf/tools/idf.py erase_flash flash monitor -p /dev/ttyUSB1 -B build   
-     
+Establish serial connection between your host machine and the ESP32 kit. You must install CP210x USB to UART Bridge VCP drivers. You can download these [drivers](https://www.silabs.com/products/development-tools/software/usb-to-uart-bridge-vcp-drivers) from Silicon Labs.
+
+Use Espressif's IDF utility ( amazon-freertos/vendors/espressif/esp-idf/tools/idf.py ) to flash your board, run the application, and see logs.
+To erase the board's flash, go to the <amazon-freertos> directory and use the following command:  
+```python ./vendors/espressif/esp-idf/tools/idf.py erase_flash -p COM17 -B build```
+
+To flash the application binary to your board, use the IDF script to flash your board:
+```python ./vendors/espressif/esp-idf/tools/idf.py flash -p COM17 -B build```
+
+To monitor:
+```python ./vendors/espressif/esp-idf/tools/idf.py monitor -p COM17 -B build```
+
+You can combine these commands. For example, suppose the com port of your ESP32 kit is COM5:
+```python ./vendors/espressif/esp-idf/tools/idf.py erase_flash flash monitor -p COM17 -B build```  
 
 ### Add the custom source code
 Open the SDK folder, in the folder …/demos/shadow, replace the C file “aws_iot_demo_shadow.c” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “aws_iot_shadow_blem.h” to the folder.
 d.	The WiFi settings can be done in the file …/demos/include/aws_clientcrediential.h
 e.	Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file …/demos/includes/aws_clientcrediential_keys.h
-f.	Alternatively, you can use the quick setup which instructed [on this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
+f.	Alternatively, you can use the quick setup which instructed on [this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
 
 ###	Build the esp32 program 
 Serial connection to your ESP32 board
