@@ -347,6 +347,8 @@ The picture below illustrates the block diagram of controlling Physical Device (
 1. Setting up your AWS Account and Permissions [EN](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-account-and-permissions.html) | [CN](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-account-and-permissions.html), this step gives you right to access AWS IoT console
 2. Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Because some of the necessary features (IoT Core, Amazon FreeRTOS, etc.) are only supported on this server, so it's recommended to choose this server, and continue the following steps.
 
+https://developer.amazon.com/docs/smarthome/steps-to-build-a-smart-home-skill.html#test-your-skill
+
 Navigate to the **IoT Core Service**, below is the screenshot if you log into the AWS IoT console successfully.
 
 <div align="center">
@@ -587,6 +589,10 @@ At the Alexa console, the “Default endpoint” should be set as the endpoint o
 3.	After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).  
 
 **Setup the LWA**:  
+For a skill that includes the smart home, video, baby activity, or meetings model, the account linking is required.
+Account linking must be configured with authorization code grant.
+https://developer.amazon.com/docs/devconsole/build-your-skill.html#account-linking
+
 * i. Connect to https://developer.amazon.com/login.html and authenticate with your Amazon credentials.
 * ii. Click "Login with Amazon"
 * iii. Click on “Create a New Security Profile”
@@ -626,6 +632,7 @@ After mutual association, the second step would be account linking. On the Alexa
   <img src="./images/account_linking.png">
   <center> <b>Figure: Account linking</b> </center>
 </div>  
+</br>
 
 The account linking in this project is using Login with Amazon(LWA), which gives the log in the authorization right to Amazon. If a third-platform is used to communicate with Alexa, the account linking must be set using Aouth2.0. Because this project doesn’t have a device cloud, so here we just use LWA.
 Amazon console also supports the skill-testing. Click on the “Test” option; another interface comes out.
@@ -642,6 +649,16 @@ Amazon console also supports the skill-testing. Click on the “Test” option; 
 <div align="center">
   <img src="./images/config_the_skill_2.png">
 </div>  
+
+And then you need to enable the skill with the Alexa companion app (cannot finish it with webpage).
+<div align="center">
+  <img src="./images/enable_your_skill_on_app.png">
+</div>  
+
+<div align="center">
+  <img src="./images/enable_skill_on_alexa_app.gif">
+</div>  
+
 
 6.	Go to https://alexa.amazon.com/spa/index.html#skills
 
@@ -736,8 +753,10 @@ Regarding to the lambda function, we take the *Alexa Smart Home skill sample* re
 * On the top right corner, note the <span id = "LambdaARN"><font color="red">Lambda ARN</font></span>.
 * Lambda ARN: Copy the ARN and it will be used in the Alexa Skill section as mentioned above. 
 
+After uploading the .ZIP package successfully, please make sure that the directory structure is similar as below, and the lambda function file name should be lambda_function.py
+
 <div align="center">
-  <img src="./images/lambda_function_configuration_2.png">
+  <img src="./images/lambda_function_configuration_3.png">
 </div>  
 
 10.	Setting Up Your AWS Account and Permissions with IAM
@@ -745,6 +764,8 @@ IAM (AWS Identity and Access Management) is a web service that helps you securel
 To grant your IAM user account access to AWS IoT and Amazon FreeRTOS, attach the following IAM policies to your IAM user account:
 * AmazonFreeRTOSFullAccess
 * AWSIoTFullAccess  
+* AWSIoTDataAccess
+* AWSLambdaFullAccess
 
 Find the IAM services
 <div align="center">
