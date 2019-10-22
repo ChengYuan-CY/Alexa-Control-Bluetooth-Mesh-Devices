@@ -215,71 +215,9 @@ def respond_brightnessControl_dir(request):
 
 For instance, a brightness controlling directive for light could be executed and responded by the function above. The lambda function will first analyze the directive, extract the information such as the ```endpoint_id```, the ```correlation_token``` (which is used in response to Alexa), and the specific actions to be done. Then the lambda function will access to the IoT core, update the corresponding attribute information on the appointed virtual device using ```update_thing_shadow``` function. If the updating action is done successfully, lambda will give an acknowledging response to Alexa; else it will give an ```ErrorResponse```.  
 
-As mentioned above, the **Lambda function** is the place to hold **Alexa skill**. The codes in the lambda function are basically the essence of the Alexa skill. However, to associate a Lambda function and an Alexa smart home skill, several steps need to be done.
-
-Firstly, create an Alexa smart home skill on [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill). 
-https://developer.amazon.com/alexa/console/ask/create-new-skill
-* Fill the Skill name, for instance, silabs_apac_alexa_btmesh_demo
-* Select the “Smart Home” and click “Create skill” button in the top right of this page.
-
-<div align="center">
-  <img src="./images/create_a_new_skill.png">
-</div>
-
-<div align="center">
-  <img src="./images/create_a_new_skill_2.png">
-</div>
+As mentioned above, the **Lambda function** is the place to hold **Alexa skill**. The codes in the lambda function are basically the essence of the Alexa skill. However, to associate a Lambda function and an Alexa smart home skill, several steps need to be done. Please see the section [Replication the project](#replication-the-project) for the detailed steps for replicating this project on your end.
 
 
-At the Alexa console, the “Default endpoint” should be set as the endpoint of the lambda function. 
-Also, the skill ID should also be set on the lambda function. Therefore, the skill is associated with the lambda function.
-
-<div align="center">
-  <img src="./images/fill_default_endpoint_info.png">
-</div>   
-   
-
-<div align="center">
-  <img src="./images/lambda_function_adding_alexa_smart_home_trigger.png">
-  <center> <b>Figure: Lambda function adding Alexa smart home trigger</b> </center>
-</div>  
-
-After mutual association, the second step would be account linking. On the Alexa console, click on the account linking option, input the authorization URI and the access token URI as shown below.
-
-<div align="center">
-  <img src="./images/account_linking.png">
-  <center> <b>Figure: Account linking</b> </center>
-</div>  
-
-The account linking in this project is using Login with Amazon(LWA), which gives the log in the authorization right to Amazon. If a third-platform is used to communicate with Alexa, the account linking must be set using Aouth2.0. Because this project doesn’t have a device cloud, so here we just use LWA.
-Amazon console also supports the skill-testing. Click on the “Test” option; another interface comes out.
-
-<div align="center">
-  <img src="./images/skill_test.png">
-  <center> <b>Figure: Skill-testing</b> </center>
-</div>  
-
-The developer can choose either typing or using JSON formatted directive to test the Alexa skill. It simulates a real echo plus speaker to send the directives to the server where holding the Alexa skill.
-For example, if the user type or say “turn on my light”, the Alexa server will send a turn-on directive to the lambda(the skill holder server).
-
-<div align="center">
-  <img src="./images/test_turn_on_a_light.png">
-  <center> <b>Figure: Turn on a light</b> </center>
-</div>  
-
-<div align="center">
-  <img src="./images/test_turn_on_jSON_directive.png">
-  <center> <b>Figure: TurnOn JSON directive</b> </center>
-</div>  
-
-Then the lambda function will handle the directive and give a response.
-
-<div align="center">
-  <img src="./images/test_turn_on_jSON_directive_response.png">
-  <center> <b>Figure: TurnOn response</b> </center>
-</div>  
-
-The keywords “event” and “directive” on the top of the JSON file marks what the message is and where does the message from.
 Lambda function:
 As introduced before, the **lambda function** is the place holding Alexa skills. Every “directive” is processed and handled in the lambda function. It is quite complex to set up a lambda function, the detailed steps to set up a lambda function can be found [here](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html), and the Chinese version documentation is available [here](https://docs.aws.amazon.com/zh_cn/lambda/latest/dg/getting-started.html).
 The lambda function has multiple servers in different areas of the world. However, some of them don’t support Alexa smart home skills. This project chooses **US East(N.Virgina)** server to hold the skill.
@@ -389,8 +327,14 @@ In this section, a step-by-step instruction will be provided to the reader to re
 * 4. Any COM port monitor tool (Tera Term)  
 
 ## Procedures:
-The picture below illustrates the block diagram of controlling Physical Device (that is Bluetooth Mesh device in this project) via Amazon Echo. We will split the procedures as few parts below.
+The picture below illustrates the block diagram of controlling Physical Device (that is Bluetooth Mesh devices in this project) via Amazon Echo. We will split the procedures as several parts below.
+<div align="center">
+  <img src="./images/replicate_step0.png">
+</div>  
+</br>
+
 * [Configure the AWS IoT core settings](#configure-the-aws-iot-core-settings)
+* [Create Alexa Skill](#create-alexa-skill)
 * [Lambda function](#lambda-function)
 * [Download and set up freeRTOS SDK on ESP32](#download-and-set-up-freertos-sdk-on-esp32)
 
@@ -401,38 +345,33 @@ The picture below illustrates the block diagram of controlling Physical Device (
 </br>
 
 1. Setting up your AWS Account and Permissions [EN](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-account-and-permissions.html) | [CN](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-account-and-permissions.html), this step gives you right to access AWS IoT console
-2. Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Because some of the necessary features (IoT Core, Amazon FreeRTOS) are only supported on this server, so it's recommended to switch this server, and continue the following steps.
+2. Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Because some of the necessary features (IoT Core, Amazon FreeRTOS, etc.) are only supported on this server, so it's recommended to choose this server, and continue the following steps.
 
-Below is the screenshot if you log into the AWS IoT console successfully.
+Navigate to the **IoT Core Service**, below is the screenshot if you log into the AWS IoT console successfully.
 
 <div align="center">
-  <img src="./images/aws_iot_console.png">
+  <img src="./images/login_aws_iot_console.gif">
   <center> <b>Figure: AWS IoT console</b> </center>
 </div>  
 
-3. Create a thing called “esp32” on your AWS console: 
+3. Create a thing called “esp32_btmesh_bridge” on your AWS console: 
 click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> Create certificate -> Download the certificate and Activate. 
 **Note**: Carefully preserve the thing certificates downloaded. 
 
 <div align="center">
-  <img src="./images/create_a_thing.png">
+  <img src="./images/create_a_thing.gif">
   <center> <b>Figure: Create a thing</b> </center>
 </div>  
 </br>
 
+4.	Go back to the console, open your thing “esp32_btmesh_bridge”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy. If you have a policy, change it to. If not, please refer to next step and then back to here.
 <div align="center">
-  <img src="./images/name_the_thing_as_esp32.png">
-  <center> <b>Figure: Name the thing as esp32</b> </center>
+  <img src="./images/attach_policy_to_ting.gif">
+  <center> <b>Figure: Attach Policy</b> </center>
 </div>  
 </br>
 
-<div align="center">
-  <img src="./images/certificate_created.png">
-</div>  
-</br>
-
-4.	Go back to the console, open your thing “esp32”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy, if you have a policy, change it to:
-5.	And also don’t forget to modify the “Resource” as the lambda of yours.
+5.	Please don’t forget to modify the “Resource” of the policy as the lambda of yours.
 
 ```
 {
@@ -441,47 +380,48 @@ click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> 
     {
       "Effect": "Allow",
       "Action": "iot:Connect",
-      "Resource": "arn:aws:iot:us-east-1:330321474979:*"
+      "Resource": "arn:aws:iot:us-east-1:879362360571:*"
     },
     {
       "Effect": "Allow",
       "Action": "iot:Publish",
-      "Resource": "arn:aws:iot:us-east-1:330321474979:*"
+      "Resource": "arn:aws:iot:us-east-1:879362360571:*"
     },
     {
       "Effect": "Allow",
       "Action": "iot:Subscribe",
-      "Resource": "arn:aws:iot:us-east-1:330321474979:*"
+      "Resource": "arn:aws:iot:us-east-1:879362360571:*"
     },
     {
       "Effect": "Allow",
       "Action": "iot:Receive",
-      "Resource": "arn:aws:iot:us-east-1:330321474979:*"
+      "Resource": "arn:aws:iot:us-east-1:879362360571:*"
     }
   ]
 }
 ```
 If you don’t have a policy, go back to console -> secure -> policy -> create You can create a policy to then attach it.
-<div align="center">
-  <img src="./images/certificate.png">
-  <center> <b>Figure: Certificate</b> </center>
-</div>  
 
 <div align="center">
-  <img src="./images/create_a_plicy_1.png">
-</div>  
-
-<div align="center">
-  <img src="./images/create_a_plicy_2.png">
+  <img src="./images/create_a_policy.gif">
   <center><b>Figure: Create a policy in this interface</b></center>
 </div>  
+</br>
 
-6.	Click on the Manage -> Thing -> esp32 -> Shadow -> Edit, paste the initial shadow document. The initial shadow document must have the same desired and reported section, if you want to change the shadow document, remember to change the shadow document template on the esp32 board and Alexa skill, otherwise the program won’t run correctly.
+After creating the policy, the UI will similar like below.
 
 <div align="center">
-  <img src="./images/shadow_document.png">
+  <img src="./images/create_a_policy_result.png">
+</div>  
+</br>
+
+6.	Click on the Manage -> Thing -> esp32_btmesh_bridge -> Shadow -> Edit, paste the initial shadow document below. The initial shadow document must have the same desired and reported section, if you want to change the shadow document, remember to change the shadow document template on the esp32 board and Alexa skill, otherwise the program won’t run correctly.
+
+<div align="center">
+  <img src="./images/shadow_document.gif">
   <center><b>Figure: Shadow document</b></center>
 </div>  
+</br>
 
 Below is the initial Shadow document utilized in this project.
 ```
@@ -551,6 +491,7 @@ Below is the initial Shadow document utilized in this project.
 
 7.	Use the test function on AWS IoT console to check if the rule that using the MQTT works or not.
 Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic. Below are the all available MQTT topics for subscribe or publish. For example, you can publish the message to the topic ```$aws/things/esp32/shadow/update``` to update the thing shadow, and subscribe to the MQTT topics ```$aws/things/esp32/shadow/update/accepted``` and ```$aws/things/esp32/shadow/update/documents``` for the accepted messages, also you can monitor the topic ```$aws/things/esp32/shadow/update/rejected``` for debugging purpose. If the message was rejected, you can get the error code by subscribing the ```$aws/things/esp32/shadow/update/rejected``` topic.
+Receiving the MQTT message via the subscribing topic ```$aws/things/esp32/shadow/update/accepted``` means that the thing shadow works now.
 
 <div align="center">
   <img src="./images/topic_to_subscribe.png">
@@ -559,7 +500,7 @@ Click on the “Interact” option, choose the corresponding topic which represe
 </br>  
 
 <div align="center">  
-  <img src="./images/subscribe_the_topic_and_publish_content_you_want.png">  
+  <img src="./images/subscribe_the_topic_and_publish_content_you_want.gif">  
   <center><b>Figure: Subscribe the topic and publish content you want</b></center>  
 </div>  
 </br>  
@@ -617,16 +558,35 @@ You can find an example shadow document [here](https://docs.aws.amazon.com/iot/l
 }
 ```
 
-###	Alexa skill
-1.	Log into the [Alexa developer console](https://developer.amazon.com/alexa/console/ask) using your amazon account.
+###	Create Alexa Skill
+1.	Log into the [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill) with your amazon account.
 2.	Choose Create skill->Smart Home->Enter the skill name->Create. Once you created the Smart Home Skill, <span id = "YourSkillID"><font color="red">Your Skill ID</font></span> will be assigned that will used by Lambda function.
 
 <div align="center">
-  <img src="./images/alexa_smart_home_skill_create.png">
-</div> 
+  <img src="./images/create_a_new_skill.png">
+</div>
+</br>
 
-3.	After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).
-4.	Setup the LWA:
+<div align="center">
+  <img src="./images/create_a_new_skill_2.png">
+</div>
+</br>
+
+At the Alexa console, the “Default endpoint” should be set as the endpoint of your lambda function. Also, the skill ID should also be set on the lambda function. Therefore, the skill is associated with the lambda function.
+
+<div align="center">
+  <img src="./images/fill_default_endpoint_info.png">
+</div>   
+</br>
+
+<div align="center">
+  <img src="./images/lambda_function_adding_alexa_smart_home_trigger.png">
+  <center> <b>Figure: Lambda function adding Alexa smart home trigger</b> </center>
+</div>  
+
+3.	After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).  
+
+**Setup the LWA**:  
 * i. Connect to https://developer.amazon.com/login.html and authenticate with your Amazon credentials.
 * ii. Click "Login with Amazon"
 * iii. Click on “Create a New Security Profile”
@@ -658,6 +618,23 @@ You can find an example shadow document [here](https://docs.aws.amazon.com/iot/l
 * xii. Provide Redirect URL's to LWA:
 * xiii. The Configuration page for your Skill lists several Redirect URL's. Open the LWA security profile you created earlier and visit the Web Settings dialog. Provide each of the Redirect URL values from your Skill in the “Allowed Return URLs” field.
 
+
+
+After mutual association, the second step would be account linking. On the Alexa console, click on the account linking option, input the authorization URI and the access token URI as shown below.
+
+<div align="center">
+  <img src="./images/account_linking.png">
+  <center> <b>Figure: Account linking</b> </center>
+</div>  
+
+The account linking in this project is using Login with Amazon(LWA), which gives the log in the authorization right to Amazon. If a third-platform is used to communicate with Alexa, the account linking must be set using Aouth2.0. Because this project doesn’t have a device cloud, so here we just use LWA.
+Amazon console also supports the skill-testing. Click on the “Test” option; another interface comes out.
+
+<div align="center">
+  <img src="./images/skill_test.png">
+  <center> <b>Figure: Skill-testing</b> </center>
+</div>  
+
 <div align="center">
   <img src="./images/config_the_skill_1.png">
 </div>  
@@ -671,6 +648,30 @@ You can find an example shadow document [here](https://docs.aws.amazon.com/iot/l
 <div align="center">
   <img src="./images/skill_configuration_result.png">
 </div>  
+</br>
+
+7. Test your Alexa Skill
+The developer can choose either typing or using JSON formatted directive to test the Alexa skill. It simulates a real echo plus speaker to send the directives to the server where holding the Alexa skill.
+For example, if the user type or say “turn on my light”, the Alexa server will send a turn-on directive to the lambda(the skill holder server).
+
+<div align="center">
+  <img src="./images/test_turn_on_a_light.png">
+  <center> <b>Figure: Turn on a light</b> </center>
+</div>  
+
+<div align="center">
+  <img src="./images/test_turn_on_jSON_directive.png">
+  <center> <b>Figure: TurnOn JSON directive</b> </center>
+</div>  
+
+Then the lambda function will handle the directive and give a response.
+
+<div align="center">
+  <img src="./images/test_turn_on_jSON_directive_response.png">
+  <center> <b>Figure: TurnOn response</b> </center>
+</div>  
+
+The keywords “event” and “directive” on the top of the JSON file marks what the message is and where does the message from.
 
 ###	Lambda function:
 Clone the repo https://github.com/sheldon123z/Alexa-esp32freeRTOS-EFR32BG13-Bluetooth-mesh-project.git
