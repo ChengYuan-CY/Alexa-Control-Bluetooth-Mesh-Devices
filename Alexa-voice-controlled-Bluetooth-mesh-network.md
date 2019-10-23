@@ -323,8 +323,8 @@ In this section, a step-by-step instruction will be provided to the reader to re
 ### Software Used:  
 * 1. Simplicity Studio IDE  
 * 2. Bluetooth mesh SDK v1.5.0 or above  
-* 3. Amazon AWS freeRTOS SDK (click to open github page)  
-* 4. Any COM port monitor tool (Tera Term)  
+* 3. Amazon AWS freeRTOS SDK
+* 4. Any serial port monitor tool (Tera Term)  
 
 ## Procedures:
 The picture below illustrates the block diagram of controlling Physical Device (that is Bluetooth Mesh devices in this project) via Amazon Echo. We will split the procedures as several parts below.
@@ -358,7 +358,7 @@ Navigate to the **IoT Core Service**, below is the screenshot if you log into th
 
 3. Create a thing called “esp32_btmesh_bridge” on your AWS console: 
 click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> Create certificate -> Download the certificate and Activate. 
-**Note**: Carefully preserve the thing certificates downloaded. 
+**Note**: Carefully preserve the thing certificates downloaded. The keys will be used in the amazon freeRTOS SDK running on the ESP32.
 
 <div align="center">
   <img src="./images/create_a_thing.gif">
@@ -366,14 +366,14 @@ click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> 
 </div>  
 </br>
 
-4.	Go back to the console, open your thing “esp32_btmesh_bridge”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy. If you have a policy, change it to. If not, please refer to next step and then back to here.
+4.	Go back to the console, open your thing “esp32_btmesh_bridge”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy. If you have a policy, select it. If not, please refer to next step and then back to here.
 <div align="center">
   <img src="./images/attach_policy_to_ting.gif">
   <center> <b>Figure: Attach Policy</b> </center>
 </div>  
 </br>
 
-5.	Please don’t forget to modify the “Resource” of the policy as the lambda of yours.
+5.	Please don’t forget to modify the “Resource” of the policy as the lambda of yours. The Resource refers to the Things.
 
 ```
 {
@@ -491,9 +491,9 @@ Below is the initial Shadow document utilized in this project.
 }
 ```
 
-7.	Use the test function on AWS IoT console to check if the rule that using the MQTT works or not.
-Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic. Below are the all available MQTT topics for subscribe or publish. For example, you can publish the message to the topic ```$aws/things/esp32/shadow/update``` to update the thing shadow, and subscribe to the MQTT topics ```$aws/things/esp32/shadow/update/accepted``` and ```$aws/things/esp32/shadow/update/documents``` for the accepted messages, also you can monitor the topic ```$aws/things/esp32/shadow/update/rejected``` for debugging purpose. If the message was rejected, you can get the error code by subscribing the ```$aws/things/esp32/shadow/update/rejected``` topic.
-Receiving the MQTT message via the subscribing topic ```$aws/things/esp32/shadow/update/accepted``` means that the thing shadow works now.
+7.	After creating the Things, you can use the test function on AWS IoT console to check if the rule that using the MQTT works or not.
+Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic. Below are the all available MQTT topics for subscribe or publish. For example, you can publish the message to the topic ```$aws/things/<things Name>/shadow/update``` to update the thing shadow, and subscribe to the MQTT topics ```$aws/things/<things Name>/shadow/update/accepted``` and ```$aws/things/<things Name>/shadow/update/documents``` for the accepted messages, also you can monitor the topic ```$aws/things/<things Name>/shadow/update/rejected``` for debugging purpose. If the message was rejected, you can get the error code by subscribing the ```$aws/things/<things Name>/shadow/update/rejected``` topic.
+Receiving the MQTT message via the subscribing topic ```$aws/things/<things Name>/shadow/update/accepted``` means that the thing shadow works now.
 
 <div align="center">
   <img src="./images/topic_to_subscribe.png">
@@ -561,6 +561,13 @@ You can find an example shadow document [here](https://docs.aws.amazon.com/iot/l
 ```
 
 ###	Create Alexa Skill
+
+After configuring the AWS IoT Core and creating Things, we need to create Alexa Skill.
+<div align="center">
+  <img src="./images/replicate_step2.png">
+</div>
+</br>
+
 1.	Log into the [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill) with your amazon account.
 2.	Choose Create skill->Smart Home->Enter the skill name->Create. Once you created the Smart Home Skill, <span id = "YourSkillID"><font color="red">Your Skill ID</font></span> will be assigned that will used by Lambda function.
 
@@ -588,7 +595,7 @@ At the Alexa console, the “Default endpoint” should be set as the endpoint o
 
 3.	After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).  
 
-**Setup the LWA**:  
+4. Setup the LWA:
 For a skill that includes the smart home, video, baby activity, or meetings model, the account linking is required.
 Account linking must be configured with authorization code grant.
 https://developer.amazon.com/docs/devconsole/build-your-skill.html#account-linking
@@ -601,13 +608,14 @@ https://developer.amazon.com/docs/devconsole/build-your-skill.html#account-linki
   <img src="./images/LWA_setup.png">
 </div> 
 
-* iv. Fill in all three required fields to create your security profile and click “Save”. For the “Consent Privacy Notice URL”, please fill it with your own privacy notice URL.
+* iv. Fill in all three required fields to create your security profile and click “Save”. 
+For the “Consent Privacy Notice URL”, please fill it with your own privacy notice URL. If there is no privacy notice, you can just fill it with ```https://www.privacypolicies.com/blog/gdpr-consent-examples/```.
 
 <div align="center">
   <img src="./images/security_profile_management.png">
 </div> 
 
-* v. Before you complete this step, be sure to click on the link named “Show Client ID and Client Secret” and save these values to a secure location so they're easily available later. You’ll need these values later in a future step.  
+* v. Before you complete this step, be sure to click on the link named “Show Client ID and Client Secret” and save these values to a secure location so they're easily available later. You’ll need these values later in a next step.  
 
 5.	Configure the skill:
 * i. Go back to https://developer.amazon.com/home.html and sign in as needed
@@ -621,16 +629,19 @@ https://developer.amazon.com/docs/devconsole/build-your-skill.html#account-linki
 * ix. Client Authentication Scheme: HTTP Basic (Recommended)
 * x. Scope: profile (click Add Scope first to add)
 * xi. Click Save
-* xii. Provide Redirect URL's to LWA:
+* xii. Provide the Redirect URL's (as illustrated in the following screenshot) to LWA:
 * xiii. The Configuration page for your Skill lists several Redirect URL's. Open the LWA security profile you created earlier and visit the Web Settings dialog. Provide each of the Redirect URL values from your Skill in the “Allowed Return URLs” field.
-
-
 
 After mutual association, the second step would be account linking. On the Alexa console, click on the account linking option, input the authorization URI and the access token URI as shown below.
 
 <div align="center">
   <img src="./images/account_linking.png">
   <center> <b>Figure: Account linking</b> </center>
+</div>  
+</br>
+
+<div align="center">
+  <img src="./images/LWA_setup_web.png">
 </div>  
 </br>
 
@@ -734,7 +745,6 @@ Zip all contents of that directory to python.zip.
 </div>  
 </br>
  
-8.	Also need to add the “DynamoDB” as another trigger. (no need now if there is no database access)
 9.	Click the icon of the lambda function for Configuration
 
 <div align="center">
@@ -745,7 +755,7 @@ Zip all contents of that directory to python.zip.
 Regarding to the lambda function, we take the *Alexa Smart Home skill sample* released by Amazon as starting point, you can access it from the repository [skill-sample-python-smarthome-switch](https://github.com/alexa/skill-sample-python-smarthome-switch). And also you can just reuse the lambda function we have implemented for this project, the zip package ***alexa-control-btmesh-lambda.zip*** is included in the sub directory. 
 
 * Runtime = Python 3.6
-* Code entry type = Upload a .ZIP file (the Alexa skill package). After uploading the .ZIP file, please make sure that the self_defined_lambda.py in the root folder.
+* Code entry type = Upload a .ZIP file (the Alexa skill package). After uploading the .ZIP file, please make sure that the lambda_function.py in the root folder.
 * Click on Upload and find the python.zip you created earlier
 * Handler = self_defined_lambda.lambda_handler
 * Click Next
