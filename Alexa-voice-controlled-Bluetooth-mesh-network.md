@@ -1,34 +1,6 @@
 # Table of Content
 
-[Project Background:](#project-background)
-  - [Project Devices:](#project-devices)
-  - [Project Preparation:](#project-preparation)
-[Project Overview](#project-overview)
-  - [Topology](#topology)
-      - [Alexa skill](#alexa-skill)
-      - [AWS IoT Core](#aws-iot-core)
-      - [AWS FreeRTOS:](#aws-freertos)
-      - [Bluetooth mesh network:](#bluetooth-mesh-network)
-  - [Technical details:](#technical-details)
-      - [Alexa Smart Home Skill](#alexa-smart-home-skill)
-      - [AWS IoT Core](#aws-iot-core-1)
-      - [ESP32 and AWS freeRTOS](#esp32-and-aws-freertos)
-      - [Bluetooth Mesh Network](#bluetooth-mesh-network)
-      - [Communications:](#communications)
-[Replication the project](#replication-the-project)
-  - [Preparation](#preparation)
-      - [Components:](#components)
-      - [Software Used:](#software-used)
-  - [Procedures:](#procedures)
-  - [1.	Configure the AWS IoT core settings:](#1-configure-the-aws-iot-core-settings)
-  - [Download and set up freeRTOS SDK:](#download-and-set-up-freertos-sdk)
-      - [Download the project](#download-the-project)
-      - [Build the esp32 program](#build-the-esp32-program)
-      - [Build BG13 embedded provisioner program](#build-bg13-embedded-provisioner-program)
-      - [Build MG21 Bluetooth mesh light/switch/sensor/sensor monitor program](#build-mg21-bluetooth-mesh-lightswitchsensorsensor-monitor-program)
-      - [Lambda function:](#lambda-function)
-      - [Alexa skill:](#alexa-skill)
-[Conclusion:](#conclusion)
+
 
 
 # Project Background:
@@ -65,7 +37,7 @@ A Bluetooth mesh network is going to be controlled by an Amazon Echo Plus 2 via 
  
 # Project Overview
 ## Topology
- 
+Below is the block diagram of this project.
 <div align="center">
   <img src="./images/topology_block_diagram.png">
 </div>
@@ -80,7 +52,7 @@ With Lambda, you can run code for virtually any type of application or backend s
   <img src="./images/diagram_Lambda-HowItWorks.png">
 </div>
 
-### Alexa skill
+### Alexa Skill
 The Alexa skill is the bridge that connects the users to AWS IoT could.  
 After Amazon Echo receiving the user’s voice commands, it will sent the voice record to AWS Alexa server(AI assistant server), where interprets the voice command to control directives. Then, the Alexa server sends the directives to lambda server, **a place running the skill code**. In the Lambda server, the specific action is executed according to the content of the directives. For example, if the user says “Alexa, turn on my light”, the Alexa will analysis this voice command and sending a JSON formatted file which listed a bunch of information about the light and actions to be executed to lambda, and then lambda will modify the light status from “OFF” to “ON” in the database.
 
@@ -310,6 +282,9 @@ The first byte is used to identify what type of operation is. Currently, the ope
   <center> <b>Figure: Light default data definition</b> </center>
 </div>  
 
+
+*** 
+
 # Replication the project
 In this section, a step-by-step instruction will be provided to the reader to replicate the project.
 ## Preparation
@@ -333,22 +308,30 @@ The picture below illustrates the block diagram of controlling Physical Device (
 </div>  
 </br>
 
-* [Configure the AWS IoT core settings](#configure-the-aws-iot-core-settings)
+* [Create and Configure device within AWS IoT](#create-and-configure-device-within-aws-iot)
 * [Create Alexa Skill](#create-alexa-skill)
 * [Lambda function](#lambda-function)
 * [Download and set up freeRTOS SDK on ESP32](#download-and-set-up-freertos-sdk-on-esp32)
+* [Reference](#reference)
 
-###	Configure the AWS IoT core settings: 
+### Reference
+https://developer.amazon.com/docs/smarthome/steps-to-build-a-smart-home-skill.html#test-your-skill
+
+
+###	Create and Configure device within AWS IoT
 <div align="center">
   <img src="./images/replicate_step1.png">
 </div>  
 </br>
 
-1. Setting up your AWS Account and Permissions [EN](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-account-and-permissions.html) | [CN](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-account-and-permissions.html), this step gives you right to access AWS IoT console
-2. Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Because some of the necessary features (IoT Core, Amazon FreeRTOS, etc.) are only supported on this server, so it's recommended to choose this server, and continue the following steps.
+AWS IoT provides secure, bi-directional communication between internet-connected devices such as sensors, embedded microcontrollers and the AWS Cloud. This makes it possible for you to collect telemetry data from multiple devices, and store and analyze the data. You can also create applications that enable your users to control these devices from their phones or tablets.
+The tutorial below shows you how to create resources required to send, receive, and process MQTT messages from devices using AWS IoT. And the section [Download and set up freeRTOS SDK on ESP32](#download-and-set-up-freertos-sdk-on-esp32) show you how to use an MQTT client to emulate IoT device(s).
 
-https://developer.amazon.com/docs/smarthome/steps-to-build-a-smart-home-skill.html#test-your-skill
+#### Create AWS account
+If you do not have an AWS account, create one by referring to the knowledge base [How do I create and activate a new Amazon Web Services account?](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/). 
 
+#### Navigate to IoT Core Service
+Log into [AWS IoT console](https://us-east-1.console.aws.amazon.com/iot/home?region=us-east-1#/dashboard), open the services and choose **N.Virginia** as the server. Because some of the necessary features (IoT Core, Amazon FreeRTOS, etc.) are only supported on this server, so it's recommended to choose this server, and continue the following steps.
 Navigate to the **IoT Core Service**, below is the screenshot if you log into the AWS IoT console successfully.
 
 <div align="center">
@@ -356,7 +339,9 @@ Navigate to the **IoT Core Service**, below is the screenshot if you log into th
   <center> <b>Figure: AWS IoT console</b> </center>
 </div>  
 
-3. Create a thing called “esp32_btmesh_bridge” on your AWS console: 
+#### Register Device in AWS IoT Registry
+Devices connected to AWS IoT are represented by IoT things in the AWS IoT registry. The registry allows you to keep a record of all of the devices that are registered to your AWS IoT account.
+Register a thing and name it as ```esp32_btmesh_bridge``` on your AWS console: 
 click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> Create certificate -> Download the certificate and Activate. 
 **Note**: Carefully preserve the thing certificates downloaded. The keys will be used in the amazon freeRTOS SDK running on the ESP32.
 
@@ -366,14 +351,31 @@ click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> 
 </div>  
 </br>
 
-4.	Go back to the console, open your thing “esp32_btmesh_bridge”. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy. If you have a policy, select it. If not, please refer to next step and then back to here.
+#### Create an AWS IoT Policy
+AWS IoT policies are used to authorize your device to perform AWS IoT operations, such as subscribing or publishing to MQTT topics. Your device presents its certificate when sending messages to AWS IoT. To allow your device to perform AWS IoT operations, you must create an AWS IoT policy and attach it to your device certificate.
+Go back to console -> secure -> policy -> create. The policy statements define the types of actions that can be performed by a resource, you can just follow the screenshot below to set your statement for this policy.
+
+<div align="center">
+  <img src="./images/create_a_policy.gif">
+  <center><b>Figure: Create a policy in this interface</b></center>
+</div>  
+</br>
+
+After creating the policy, the UI will similar like below.
+<div align="center">
+  <img src="./images/create_a_policy_result.png">
+</div>  
+</br>
+
+#### Attach an AWS IoT Policy to a Device Certificate
+Go back to the console, open your thing ```esp32_btmesh_bridge```. Click Security -> Your certificate -> Policies -> Actions -> Attach Policy. And choose the Policy you created just now, and click Attach then.
 <div align="center">
   <img src="./images/attach_policy_to_ting.gif">
   <center> <b>Figure: Attach Policy</b> </center>
 </div>  
 </br>
 
-5.	Please don’t forget to modify the “Resource” of the policy as the lambda of yours. The Resource refers to the Things.
+Please don’t forget to modify/check the “Resource” of the policy as your Things.
 
 ```
 {
@@ -402,22 +404,12 @@ click Manage -> Thing -> Register a thing -> Create -> Create a Single thing -> 
   ]
 }
 ```
-If you don’t have a policy, go back to console -> secure -> policy -> create You can create a policy to then attach it.
 
-<div align="center">
-  <img src="./images/create_a_policy.gif">
-  <center><b>Figure: Create a policy in this interface</b></center>
-</div>  
-</br>
+#### Edit the Device Shadow
+A device's shadow is a JSON document that is used to store and retrieve current state information for a device. 
+The Device Shadow service maintains a shadow for each device you connect to AWS IoT. You can use the shadow to get and set the state of a device over MQTT or HTTP, regardless of whether the device is connected to the Internet. Each device's shadow is uniquely identified by the name of the corresponding thing.
 
-After creating the policy, the UI will similar like below.
-
-<div align="center">
-  <img src="./images/create_a_policy_result.png">
-</div>  
-</br>
-
-6.	Click on the Manage -> Thing -> esp32_btmesh_bridge -> Shadow -> Edit, paste the initial shadow document below. The initial shadow document must have the same desired and reported section, if you want to change the shadow document, remember to change the shadow document template on the esp32 board and Alexa skill, otherwise the program won’t run correctly.
+Click on the Manage -> Thing -> Your Things -> Shadow -> Edit, paste the initial shadow document below. The initial shadow document must have the same desired and reported section, if you want to change the shadow document, remember to change the shadow document template on both the esp32 board and Alexa skill, otherwise the program won’t run correctly.
 
 <div align="center">
   <img src="./images/shadow_document.gif">
@@ -490,8 +482,8 @@ Below is the initial Shadow document utilized in this project.
   }
 }
 ```
-
-7.	After creating the Things, you can use the test function on AWS IoT console to check if the rule that using the MQTT works or not.
+#### Test the Created Device
+After creating the Things, you can use the test function on AWS IoT console to check if the rule that using the MQTT works or not.
 Click on the “Interact” option, choose the corresponding topic which represents the operations that you wish to do, subscribe to the topic. Below are the all available MQTT topics for subscribe or publish. For example, you can publish the message to the topic ```$aws/things/<things Name>/shadow/update``` to update the thing shadow, and subscribe to the MQTT topics ```$aws/things/<things Name>/shadow/update/accepted``` and ```$aws/things/<things Name>/shadow/update/documents``` for the accepted messages, also you can monitor the topic ```$aws/things/<things Name>/shadow/update/rejected``` for debugging purpose. If the message was rejected, you can get the error code by subscribing the ```$aws/things/<things Name>/shadow/update/rejected``` topic.
 Receiving the MQTT message via the subscribing topic ```$aws/things/<things Name>/shadow/update/accepted``` means that the thing shadow works now.
 
@@ -559,17 +551,32 @@ You can find an example shadow document [here](https://docs.aws.amazon.com/iot/l
   }
 }
 ```
+#### Further Reading
+Read the documentations below from Amazon for more information about the AWS IoT Service.
+[Register a Device in the AWS IoT Registry](https://docs.aws.amazon.com/iot/latest/developerguide/register-device.html)
+[Device Shadow Service for AWS IoT](https://docs.aws.amazon.com/iot/latest/developerguide/iot-device-shadows.html)
 
-###	Create Alexa Skill
+###	Create Alexa Smart Home Skill
+**What is Lambda?**
+AWS Lambda lets you run code without provisioning or managing servers. Alexa sends your code user requests and your code can inspect the request, take any necessary actions (such as looking up information online) and then send back a response. You can write Lambda functions in Node.js, Java, Python, C#, or Go.
+**What is Alexa Smart Home Skill?**
+Alexa provides a set of built-in capabilities, referred to as skills. The smart home skill lets a user control and query cloud-enabled smart home devices such as lights, door locks, cameras, thermostats and smart TVs.
+**The relationship between Skill and Lambda?**
+The code for your smart home skill is hosted as a Lambda function on AWS.
+For a skill that controls smart home devices such as lights, thermostats, and entertainment devices you can use the Smart Home Skill API. In this case, you develop an AWS Lambda function that running n the Lambda to accept device directives from Alexa.
+You provide code to handle directives in an AWS Lambda function. Your skill receives requests in the form of device directives to control a particular device. Your code then handles the request appropriately (for example, by turning on the requested light or turning up the volume).
 
-After configuring the AWS IoT Core and creating Things, we need to create Alexa Skill.
+After creating and configuring device within AWS IoT, we need to create Alexa Smart Home Skill.
 <div align="center">
   <img src="./images/replicate_step2.png">
 </div>
 </br>
 
-1.	Log into the [Alexa developer console](https://developer.amazon.com/alexa/console/ask/create-new-skill) with your amazon account.
-2.	Choose Create skill->Smart Home->Enter the skill name->Create. Once you created the Smart Home Skill, <span id = "YourSkillID"><font color="red">Your Skill ID</font></span> will be assigned that will used by Lambda function.
+#### Create account on Amazon Developer Console
+To configure a new smart home skill, you need an account on the Amazon Developer Console. If you don't already have an account, go to https://developer.amazon.com/alexa/console/ask and create an account. Sign in the [Alexa developer console](https://developer.amazon.com/alexa/console/ask) with your amazon account.
+
+#### Create your Smart Home Skill
+Choose Create skill->Smart Home->Enter the skill name->Create. Once you created the Smart Home Skill, <span id = "YourSkillID"><font color="red">Your Skill ID</font></span> will be assigned that will used by Lambda function.
 
 <div align="center">
   <img src="./images/create_a_new_skill.png">
@@ -581,7 +588,13 @@ After configuring the AWS IoT Core and creating Things, we need to create Alexa 
 </div>
 </br>
 
-At the Alexa console, the “Default endpoint” should be set as the endpoint of your lambda function. Also, the skill ID should also be set on the lambda function. Therefore, the skill is associated with the lambda function.
+Jump to the next section to [Add a Lambda Function](#add-a-lambda-function) and <span id = "backToSkillDeveloperConsole"><font color="red">then back to here</font></span>.
+
+
+#### Configure your Smart Home Skill (Step1)
+You must provide the ARN for your Lambda function in the skill configuration in the developer console.
+Navigate back to your skill in the Developer Console. Under **2. Smart Home service endpoint**, in the **Default endpoint** box, provide the ARN number from the Lambda function you created and click Save.
+Therefore, the skill is associated with the lambda function.
 
 <div align="center">
   <img src="./images/fill_default_endpoint_info.png">
@@ -593,11 +606,14 @@ At the Alexa console, the “Default endpoint” should be set as the endpoint o
   <center> <b>Figure: Lambda function adding Alexa smart home trigger</b> </center>
 </div>  
 
-3.	After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).  
+#### Provide Account Linking Information
+**Question**: What is Account Linking?
+**Answer**: Account linking enables your skill to connect the user's identity with their identity in a different system. All smart home, video, and meetings skills must connect the identity of the Alexa user with an identity in the service provider's system. This is known as account linking, because the goal is to create a link between the Alexa user and the service provider. For more information about the Account Linking, please see the section [Further Reading](#further-reading-2)
 
-4. Setup the LWA:
-For a skill that includes the smart home, video, baby activity, or meetings model, the account linking is required.
-Account linking must be configured with authorization code grant.
+After you created the skill, the first step is to setup the account linking. Smart Home skills require that a user completes account linking during skill enablement. This step asks customers to associate their device cloud account with your smart home skill. You will need an OAuth provider in order to implement this process. If you don't already have an OAuth provider, you can use Login with Amazon (LWA).  
+
+Setup the LWA:
+For a skill that includes the smart home, video, baby activity, or meetings model, the account linking is required. Account linking must be configured with authorization code grant.
 https://developer.amazon.com/docs/devconsole/build-your-skill.html#account-linking
 
 * i. Connect to https://developer.amazon.com/login.html and authenticate with your Amazon credentials.
@@ -617,17 +633,22 @@ For the “Consent Privacy Notice URL”, please fill it with your own privacy n
 
 * v. Before you complete this step, be sure to click on the link named “Show Client ID and Client Secret” and save these values to a secure location so they're easily available later. You’ll need these values later in a next step.  
 
-5.	Configure the skill:
+<div align="center">
+  <img src="./images/LWA_setup.gif">
+</div> 
+
+
+#### Configure your Smart Home Skill (Step2)
 * i. Go back to https://developer.amazon.com/home.html and sign in as needed
 * ii. Go to Alexa > Alexa Skills Kit > the Alexa skill you created earlier
 * iii. In the Configuration tab:
 * iv. Lambda ARN default = enter your <a href="#LambdaARN" target="_self">Lambda ARN</a> noted in the next section.
 * v. Authorization URI = https://www.amazon.com/ap/oa
-* vi. Access Token URI: https://api.amazon.com/auth/o2/token
+* vi. Access Token URI = https://api.amazon.com/auth/o2/token
 * vii. Client ID = your client ID from LWA noted in a previous step
 * viii.	Client Secret: your client secret from LWA noted in a previous step
 * ix. Client Authentication Scheme: HTTP Basic (Recommended)
-* x. Scope: profile (click Add Scope first to add)
+* x. Scope: profile (click *Add Scope* first to edit it)
 * xi. Click Save
 * xii. Provide the Redirect URL's (as illustrated in the following screenshot) to LWA:
 * xiii. The Configuration page for your Skill lists several Redirect URL's. Open the LWA security profile you created earlier and visit the Web Settings dialog. Provide each of the Redirect URL values from your Skill in the “Allowed Return URLs” field.
@@ -645,143 +666,206 @@ After mutual association, the second step would be account linking. On the Alexa
 </div>  
 </br>
 
-The account linking in this project is using Login with Amazon(LWA), which gives the log in the authorization right to Amazon. If a third-platform is used to communicate with Alexa, the account linking must be set using Aouth2.0. Because this project doesn’t have a device cloud, so here we just use LWA.
-Amazon console also supports the skill-testing. Click on the “Test” option; another interface comes out.
+#### Test Your Skill
+Amazon console also supports the skill-testing.
+However, to test a SmartHome or Video skill, you need first enable the skill with the Alexa companion app (cannot finish it with webpage).
+<div align="center">
+  <img src="./images/enable_your_skill_on_app.png">
+</div>  
+</br>
+
+<div align="center">
+  <img src="./images/enable_skill_on_alexa_app.gif">
+</div>  
+</br>
+
+And then you can try to discovery new devices with the App. After finishing the discoverying process, it will list all of the devices it discovered.
+<div align="center">
+  <img src="./images/discovery_new_devices.gif">
+</div>  
+</br>
+
+Then you can control all of the discovered devices with the Alexa App, also you can test them on the [Alexa developer Console](https://developer.amazon.com/alexa/console/ask).
+The developer can choose either typing or using JSON formatted directive to test the Alexa skill. It simulates a real echo plus speaker to send the directives to the server where holding the Alexa skill.
+For example, if the user type or say “turn off light”, the Alexa server will send a turn-off directive to the lambda(the skill holder server).
 
 <div align="center">
   <img src="./images/skill_test.png">
   <center> <b>Figure: Skill-testing</b> </center>
 </div>  
 
-<div align="center">
-  <img src="./images/config_the_skill_1.png">
-</div>  
+###	Add a Lambda Function
+#### Create a lambda function
+The code for your smart home skill is hosted as a Lambda function on AWS. AWS Lambda is a service that lets you run code in the cloud without managing servers. Alexa sends your skill requests and your code inspects the request, takes any necessary actions such as communicating with the device cloud for that customer, and then sends back a response.
 
-<div align="center">
-  <img src="./images/config_the_skill_2.png">
-</div>  
-
-And then you need to enable the skill with the Alexa companion app (cannot finish it with webpage).
-<div align="center">
-  <img src="./images/enable_your_skill_on_app.png">
-</div>  
-
-<div align="center">
-  <img src="./images/enable_skill_on_alexa_app.gif">
-</div>  
-
-
-6.	Go to https://alexa.amazon.com/spa/index.html#skills
-
-<div align="center">
-  <img src="./images/skill_configuration_result.png">
-</div>  
-</br>
-
-7. Test your Alexa Skill
-The developer can choose either typing or using JSON formatted directive to test the Alexa skill. It simulates a real echo plus speaker to send the directives to the server where holding the Alexa skill.
-For example, if the user type or say “turn on my light”, the Alexa server will send a turn-on directive to the lambda(the skill holder server).
-
-<div align="center">
-  <img src="./images/test_turn_on_a_light.png">
-  <center> <b>Figure: Turn on a light</b> </center>
-</div>  
-
-<div align="center">
-  <img src="./images/test_turn_on_jSON_directive.png">
-  <center> <b>Figure: TurnOn JSON directive</b> </center>
-</div>  
-
-Then the lambda function will handle the directive and give a response.
-
-<div align="center">
-  <img src="./images/test_turn_on_jSON_directive_response.png">
-  <center> <b>Figure: TurnOn response</b> </center>
-</div>  
-
-The keywords “event” and “directive” on the top of the JSON file marks what the message is and where does the message from.
-
-###	Lambda function:
-Clone the repo https://github.com/sheldon123z/Alexa-esp32freeRTOS-EFR32BG13-Bluetooth-mesh-project.git
-Zip all contents of that directory to python.zip. 
-
-**Create the lambda function:**
 1.	Go to https://console.aws.amazon.com/console/home and sign in
-2.	Switch the AWS server to “US East (N.Virginia)” on the top right of the page, because some of the features are only supported on this server.
+2.	Switch the AWS server to “US East (N.Virginia)” on the top right of the page, because some of the features are only supported on this server. Below is the recommended service for different regions.
+* N.Virginia for English (US) or English (CA) skills
+* EU (Ireland) region for English (UK), English (IN), German or French (FR) skills
+* US West (Oregon) for Japanese and English (AU) skills.
+
 3.	Go to Services > Compute > Lambda
-<div align="center">
-  <img src="./images/aws_management_console.png">
-</div>  
-
 4.	Click on Create Function
-<div align="center">
-  <img src="./images/create_asw_lambda_function.png">
-</div>  
-</br>
-
 5.	Click on “Author from scratch”
 6.	Configure your Lambda function
-* Name = SampleLambdaFunction (or whatever you want)
+* Name = alexaBtmeshBridgeLambda (or whatever you want)
 * Runtime = Python 3.6 (You can choose any language used to write your function, in this demo, we are using Python 3.6)
 * Permission = “Create a new role with basic Lambda permissions”
 * Click Create Function
 
 <div align="center">
-  <img src="./images/configure_lambda_function.png">
+  <img src="./images/create_a_lambda_function.gif">
 </div>  
 </br>
 
 7.	Click Triggers -> Add Trigger and select **Alexa Smart Home**
-* Application Id = <a href="#YourSkillID" target="_self">skill ID</a> of your test skill that your created above.
+* Application Id = <a href="#YourSkillID" target="_self">Skill ID</a> of your test skill that your created above.
 * Enable trigger = checked
 * Click Submit
 
 <div align="center">
-  <img src="./images/lambda_trigger_setting_1.png">
+  <img src="./images/add_trigger_for_lambda_function.gif">
 </div>  
 
-<div align="center">
-  <img src="./images/lambda_trigger_setting_2.png">
-</div>  
-</br>
- 
-9.	Click the icon of the lambda function for Configuration
+8.	Click the icon of the lambda function for Configuration
 
 <div align="center">
   <img src="./images/lambda_function_configuration.png">
 </div>  
 </br>
 
-Regarding to the lambda function, we take the *Alexa Smart Home skill sample* released by Amazon as starting point, you can access it from the repository [skill-sample-python-smarthome-switch](https://github.com/alexa/skill-sample-python-smarthome-switch). And also you can just reuse the lambda function we have implemented for this project, the zip package ***alexa-control-btmesh-lambda.zip*** is included in the sub directory. 
+Regarding to the lambda function, we take the *Alexa Smart Home skill sample* released by Amazon as starting point, you can access it from the repository [skill-sample-python-smarthome-switch](https://github.com/alexa/skill-sample-python-smarthome-switch). 
+And also you can just reuse the lambda function we have implemented for this project, the zip package ***alexa-control-btmesh-lambda.zip*** is included in the sub directory and also you can get it from the [github](https://github.com/ChengYuan-CY/Alexa-Control-Bluetooth-Mesh-Devices/tree/master/lambda_function).
 
-* Runtime = Python 3.6
-* Code entry type = Upload a .ZIP file (the Alexa skill package). After uploading the .ZIP file, please make sure that the lambda_function.py in the root folder.
-* Click on Upload and find the python.zip you created earlier
+* Runtime = Python 3.7
+* Code entry type = select the "Upload a .ZIP file" (the Alexa skill package)
+* Click on Upload and find the alexa-control-btmesh-lambda.zip you created earlier. The Things name is ```esp32_btmesh_bridge``` in the lambda_function.py, update it according to the real Thing name you created before.
 * Handler = self_defined_lambda.lambda_handler
 * Click Next
 * Click Save
+* After uploading the .ZIP file, please make sure that the lambda_function.py in the root folder.
 * On the top right corner, note the <span id = "LambdaARN"><font color="red">Lambda ARN</font></span>.
 * Lambda ARN: Copy the ARN and it will be used in the Alexa Skill section as mentioned above. 
 
-After uploading the .ZIP package successfully, please make sure that the directory structure is similar as below, and the lambda function file name should be lambda_function.py
+And also please pay attention to the "Existing role" of the Lambda function, we will configure the role in the next section [Configure the IAM Role for Lambda](#configure-the-iam-role-for-lambda).
+
+<div align="center">
+  <img src="./images/lambda_function_execution_role.png">
+</div>  
+</br>
+
+After uploading the ZIP package successfully, please make sure that the directory structure is similar as below, and the lambda function file name should be lambda_function.py
 
 <div align="center">
   <img src="./images/lambda_function_configuration_3.png">
 </div>  
 
-10.	Setting Up Your AWS Account and Permissions with IAM
-IAM (AWS Identity and Access Management) is a web service that helps you securely control access to AWS resources. You use IAM to control who is authenticated (signed in) and authorized (has permissions) to use resources. Please see the [user guide](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-account-and-permissions.html) for how to set up your account and permission with IAM.
-To grant your IAM user account access to AWS IoT and Amazon FreeRTOS, attach the following IAM policies to your IAM user account:
+#### Configure the IAM Role for Lambda
+IAM (AWS Identity and Access Management) is a web service that helps you securely control access to AWS resources. You use IAM to control who is authenticated (signed in) and authorized (has permissions) to use resources. 
+Please see the [user guide](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-account-and-permissions.html) for how to set up your account and permission with IAM.
+
+To grant the role with the following policy, the role was created automatically during creating the Lambda function which is ```alexaBtmeshBridgeLambda-role-lft8jt47``` here.
+
+Attach the following IAM policies to the role used by the Lambda function:
 * AmazonFreeRTOSFullAccess
 * AWSIoTFullAccess  
-* AWSIoTDataAccess
-* AWSLambdaFullAccess
+* AWSIoTDataAccess  
+* AWSLambdaFullAccess  
 
-Find the IAM services
 <div align="center">
-  <img src="./images/find_the_iam_services.png">
+  <img src="./images/iam_setting_for_lambda.gif">
 </div>  
+</br>
+After that, the Lambda function created above should able to access the following resources now.
+<div align="center">
+  <img src="./images/iam_setting_for_lambda_done.png">
+</div>  
+</br>
 
+<a href="#backToSkillDeveloperConsole" target="_self">Now navigate back to your skill in the Developer Console.</a> 
+
+#### Test the Lambda function
+If you want to perform a quick test of the Discovery request in the Lambda code editor, you can click on Test. The Configure test event page appears.
+Leave Create new test event selected. For Event template, leave the default Hello World. In the Event name, enter discovery and replace the entire contents in the editor with the following code.
+
+```
+{
+    "directive": {
+        "header": {
+            "namespace": "Alexa.Discovery",
+            "name": "Discover",
+            "payloadVersion": "3",
+            "messageId": "1bd5d003-31b9-476f-ad03-71d471922820"
+        },
+        "payload": {
+            "scope": {
+                "type": "BearerToken",
+                "token": "access-token-from-skill"
+            }
+        }
+    }
+}
+```
+
+<div align="center">
+  <img src="./images/test_lambda_function.gif">
+</div>  
+</br>
+
+Do the Test, if successful, the Execution Result should be similar to the following:
+
+```
+{
+  "event": {
+    "header": {
+      "namespace": "Alexa.Discovery",
+      "name": "Discover.Response",
+      "messageId": "00c40bcd-75e5-406e-a4d2-de476dbc7992",
+      "payloadVersion": "3",
+      "correlation_token": "INVALID"
+    },
+    "payload": {
+      "endpoints": [
+        {
+          "capabilities": [
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa",
+              "version": "3"
+            },
+            {
+              "type": "AlexaInterface",
+              "interface": "Alexa.PowerController",
+              "version": "3",
+              "properties": {
+                "supported": [
+                  {
+                    "name": "powerState"
+                  }
+                ],
+                "proactivelyReported": true,
+                "retrievable": true
+              }
+            }
+          ],
+          "description": "Sample Endpoint Description",
+          "displayCategories": [
+            "SWITCH"
+          ],
+          "endpointId": "sample-switch-01",
+          "friendlyName": "Sample Switch",
+          "manufacturerName": "Sample Manufacturer"
+        },
+      ]
+    }
+  }
+}
+```
+
+#### Further reading 2
+[Steps to Build a Smart Home Skill](https://developer.amazon.com/docs/smarthome/steps-to-build-a-smart-home-skill.html#test-your-skill)
+
+[Understand Account Linking](https://developer.amazon.com/docs/account-linking/understand-account-linking.html)
 
 ##  Download and set up freeRTOS SDK on ESP32:
 ### Download the project
@@ -808,13 +892,7 @@ After setup has finished installing ESP-IDF tools, the GUI now should looks like
 </div>  
 </br>
 
-Click the **Finish** button, ESP-IDF will set the system environment automatically.
-<div align="center">
-<img src="./images/esp_idf_tool_set_environment.png">
-</div>  
-</br>  
-
-By default, the installer updates the Windows Path environment variable so all of these tools can be run from anywhere.
+Click the **Finish** button. By default, the ESP-IDF installer updates the Windows Path environment variable automatically so all of these tools can be run from anywhere.
 <div align="center">
 <img src="./images/installer_update_path_environment.png">
 </div>  
@@ -823,8 +901,7 @@ By default, the installer updates the Windows Path environment variable so all o
 If you didn't see these path included in the System Environment, you will need to configure the environment where you are using ESP-IDF with the correct paths by yourself.
 
 #### Install CMake
-
-Install the CMake (Cross-Platform Makefile Generator). The CMake build system is required to build the Amazon FreeRTOS demo and test applications for this device. Amazon FreeRTOS supports versions 3.13 and later.
+Install the CMake (Cross-Platform Makefile Generator). The CMake build system is required to build the Amazon FreeRTOS demo and test applications for this device. Amazon FreeRTOS supports CMake versions 3.13 or above, and you can get download the latest version of CMake from [CMake.org](https://cmake.org/download/).
 
 Form you native build system, it can be GNU Make or Ninja. Ninja is recommended by Amazon since it is faster than Make and also provides native support to all desktop operating systems. And we also use the Ninja in this project.
 
@@ -860,11 +937,23 @@ You can combine these commands. For example, suppose the com port of your ESP32 
 
 ### Add the custom source code
 
-Please carefully read the [documentation page](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-getting-started.html) on how to setup the AWS freeRTOS SDK on your computer. The chinese version documentation is available [here]((https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-getting-started.html)).  
+Please carefully read the [documentation page](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-getting-started.html) on how to setup the AWS freeRTOS SDK on your computer. The chinese version documentation is available [here](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-getting-started.html).  
 
 Open the SDK folder, in the folder …/demos/shadow, replace the C file “aws_iot_demo_shadow.c” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “aws_iot_shadow_blem.h” to the folder.
-d.	The WiFi settings can be done in the file …/demos/include/aws_clientcrediential.h
-e.	Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file …/demos/includes/aws_clientcrediential_keys.h
+#### Configure permission related setting
+The WiFi settings can be done in the file ```…/demos/include/aws_clientcrediential.h```
+Set ```clientcredentialMQTT_BROKER_ENDPOINT``` as your AWS IoT endpoint. You can find it from the Things' interact information.
+<div align="center">
+<img src="./images/aws_iot_endpoint_information.png">
+</div>  
+</br>
+
+Set ```clientcredentialIOT_THING_NAME``` to the unique name of your IoT Thing.
+Set ```clientcredentialWIFI_SSID``` to your network name.
+Set ```clientcredentialWIFI_PASSWORD``` as your password.
+#### Configure certification information
+Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file ```…/demos/includes/aws_clientcrediential_keys.h```.
+
 f.	Alternatively, you can use the quick setup which instructed on [this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
 
 ###	Build the esp32 program 
@@ -897,6 +986,9 @@ https://github.com/sheldon123z/EFR32-embedded-provisioner.git
 c.	Alexa skill (use zip to compress and upload to lambda)
 https://github.com/sheldon123z/Alexa-esp32freeRTOS-EFR32BG13-Bluetooth-mesh-project.git
 d.	Light and Swtich applications are the demo applications
+
+# To-do
+Port EFR32 on Amazon FreeRTOS. And then we can interface to AWS IoT by using the combination of EFR32+WGM160P.
 
 # Conclusion:
 This project uses multiple protocols and Amazon AWS services. It breaks the limitation between the Zigbee embedded smart speaker and Bluetooth mesh embedded smart devices and realizes voice control. Although it is just a brief demonstration, it reveals the potential of multi-platform cooperation and smart automation.
