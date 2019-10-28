@@ -935,34 +935,42 @@ To monitor:
 You can combine these commands. For example, suppose the com port of your ESP32 kit is COM5:
 ```python ./vendors/espressif/esp-idf/tools/idf.py erase_flash flash monitor -p COM17 -B build```  
 
-### Add the custom source code
+Make sure that you can build the default demo, and flash it to the ESP32 kit, and also can get debug log output on the console.
+
+### Add the custom source code for Alexa BTmesh Bridge
 
 Please carefully read the [documentation page](https://docs.aws.amazon.com/freertos/latest/userguide/freertos-getting-started.html) on how to setup the AWS freeRTOS SDK on your computer. The chinese version documentation is available [here](https://docs.aws.amazon.com/zh_cn/freertos/latest/userguide/freertos-getting-started.html).  
 
-Open the SDK folder, in the folder …/demos/shadow, replace the C file “aws_iot_demo_shadow.c” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “aws_iot_shadow_blem.h” to the folder.
+###	Choose the shadow demo  Build the esp32 program 
+Serial connection to your ESP32 board
+In the file: ```…/vendors/espressif/boards/esp32/aws_demos/config_files/aws_demo_config.h```, enable the shadow demo by ```#define CONFIG_SHADOW_DEMO_ENABLED```.
+Open the SDK folder, in the folder …/demos/shadow, replace the C file “**aws_iot_demo_shadow.c**” with the provided “aws_iot_demo_shadow.c” file. Also, add the file “**aws_iot_shadow_blem.h**” to the folder.
+
 #### Configure permission related setting
 The WiFi settings can be done in the file ```…/demos/include/aws_clientcrediential.h```
 Set ```clientcredentialMQTT_BROKER_ENDPOINT``` as your AWS IoT endpoint. You can find it from the Things' interact information.
 <div align="center">
 <img src="./images/aws_iot_endpoint_information.png">
 </div>  
-</br>
+</br>  
 
 Set ```clientcredentialIOT_THING_NAME``` to the unique name of your IoT Thing.
 Set ```clientcredentialWIFI_SSID``` to your network name.
 Set ```clientcredentialWIFI_PASSWORD``` as your password.
+
 #### Configure certification information
-Paste the certificate you acquired when you create the “esp32” thing on AWS IoT console to the file ```…/demos/includes/aws_clientcrediential_keys.h```.
+Paste the certificate you acquired when you create the “esp32_btmesh_hub” thing on AWS IoT console to the file ```…/demos/includes/aws_clientcrediential_keys.h```.
 
-f.	Alternatively, you can use the quick setup which instructed on [this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
+Alternatively, you can use the quick setup which instructed on [this page](https://docs.aws.amazon.com/freertos/latest/userguide/getting_started_espressif.html) under Configure the Amazon FreeRTOS Demo Applications section.
 
-###	Build the esp32 program 
-Serial connection to your ESP32 board
-a.	In the file:
-b.	…/vendors/espressif/boards/esp32/aws_demos/config_files/aws_demo_config.h input. #define CONFIG_SHADOW_DEMO_ENABLED
-c.	Follow the building instruction on the manual page to build and flash the application.
+#### Configure the serial port of ESP32
+The esp32 will parse and forward the received MQTT message to the bluetooth provisioner (EFR32BG13) via uart port, so you need to configure the serial port for ESP32. GPIO16 and GPIO17 of ESP32 are configured as Tx and Rx pin in this project.
+```
+#define ECHO_TEST_TXD (GPIO_NUM_16)
+#define ECHO_TEST_RXD (GPIO_NUM_17)
+```
 
-## Build BG13 embedded provisioner program
+## Build EFR32BG13 embedded provisioner program
 a.	Clone the project from GitHub using “git clone https://github.com/sheldon123z/EFR32-embedded-provisioner.git”
 b.	Open the project in simplicity studio, build, flash to BG13 board
 
