@@ -1,0 +1,9 @@
+// Copyright 2019 Silicon Laboratories, Inc.
+//
+//
+
+Executing: bgbuild.exe (C:\SiliconLabs\SimplicityStudio\v4\developer\sdks\blemesh\v1.4\protocol\bluetooth\bin\bgbuild.exe)
+Standard output
+ALL OK
+
+
