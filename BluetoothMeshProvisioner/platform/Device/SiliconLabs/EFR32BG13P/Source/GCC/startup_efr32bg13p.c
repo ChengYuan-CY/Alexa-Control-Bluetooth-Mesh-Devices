@@ -75,6 +75,8 @@ extern void SystemInit(void);             /* CMSIS System Initialization      */
  * Internal References
  *----------------------------------------------------------------------------*/
 void Default_Handler(void);                          /* Default empty handler */
+void Hardfault_Handler(void);
+
 void Reset_Handler(void);                            /* Reset Handler */
 
 /*----------------------------------------------------------------------------
@@ -97,7 +99,7 @@ static uint8_t heap[__HEAP_SIZE]   __attribute__ ((aligned(8), used, section(".h
  *----------------------------------------------------------------------------*/
 /* Cortex-M Processor Exceptions */
 void NMI_Handler(void)               __attribute__ ((weak, alias("Default_Handler")));
-void HardFault_Handler(void)         __attribute__ ((weak, alias("Default_Handler")));
+void HardFault_Handler(void)         __attribute__ ((weak, alias("Hardfault_Handler")));
 void MemManage_Handler(void)         __attribute__ ((weak, alias("Default_Handler")));
 void BusFault_Handler(void)          __attribute__ ((weak, alias("Default_Handler")));
 void UsageFault_Handler(void)        __attribute__ ((weak, alias("Default_Handler")));
@@ -349,6 +351,12 @@ void Reset_Handler(void)
  * Default Handler for Exceptions / Interrupts
  *----------------------------------------------------------------------------*/
 void Default_Handler(void)
+{
+  while (true) {
+  }
+}
+
+void Hardfault_Handler(void)
 {
   while (true) {
   }

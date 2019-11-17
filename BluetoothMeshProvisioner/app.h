@@ -55,7 +55,6 @@ void setCallBack();
 
 /** @} (end addtogroup app) */
 /** @} (end addtogroup Application) */
-int parse_message(char *message);
 int generate_external_signal();
 void call_generate();
 void send_tx_value();

@@ -129,10 +129,10 @@ enum {
   waiting_sub_ack
 } state;
 
-enum {
-	FAIL=0,
-	SUCCESS=1,
-}status;
+enum cJsonParseStatus_t {
+	PARSE_FAIL=0,
+	PARSE_SUCCESS=1,
+};
 
 enum {
 	ADD_DEVICE = 0,
@@ -460,9 +460,7 @@ static void createControlCommandPacket(int deviceType,const char* deviceName,int
 
 	for(int i = strlen(attributeValue); i < attributeValueLength; i++)
 	{
-
 		attriValue[i]='x';
-
 	}
 //	printf("attributeValue is :%s\n", attriValue);
 	//constructing the packet, the packet is printed into the buffer packet
@@ -509,28 +507,26 @@ static void createControlCommandPacket(int deviceType,const char* deviceName,int
 				atoi((const char*)attributeValue));
 	}
 	if(deviceType == Switch && attributeType == ON_OFF)
-		{
-			sprintf(PACKET_BUFFER,
-					ON_OFF_COMMAND_PACKET,
-					UPDATE_DESIRED_AND_REPORTED,//1
-					deviceNameLength,
-					(const char*)device, //10 words
-					attributeNameLength,
-					(const char*)attribute,//20
-					attributeValueLength,
-					(const char*)attriValue);//5
-			printf("generated packet is:%s\n",PACKET_BUFFER);
-			//use timer to send the packet
-			gecko_cmd_hardware_set_soft_timer(32768/10,TIMER_ID_SEND_SWITCH_PACKET,1);
-		}
+	{
+		sprintf(PACKET_BUFFER,
+				ON_OFF_COMMAND_PACKET,
+				UPDATE_DESIRED_AND_REPORTED,//1
+				deviceNameLength,
+				(const char*)device, //10 words
+				attributeNameLength,
+				(const char*)attribute,//20
+				attributeValueLength,
+				(const char*)attriValue);//5
+		printf("generated packet is:%s\n",PACKET_BUFFER);
+		//use timer to send the packet
+		gecko_cmd_hardware_set_soft_timer(32768/10,TIMER_ID_SEND_SWITCH_PACKET,1);
+	}
 
 	//add other control command generating codes
 	//set the last bit as '\0'
 	PACKET_BUFFER[PACKET_SIZE]='\0';
 
-
 	return;
-
 }
 
 void sendLightSignal(const char* command)
@@ -545,6 +541,7 @@ void sendButtonSignal(const char* command)
 
 void prepareToSendPacket(int address, const char* command)
 {
+	printf("FUN:prepareToSendPacket, generate the response packet and send to ESP32\r\n");
 	switch (address)
 	{
 	case LIGHT_ADDRESS:
@@ -562,14 +559,138 @@ void prepareToSendPacket(int address, const char* command)
 
 #define ADD_DEVICE_COMMAND_PACKET "%d%.*s%.*s%.*s" //length should be 1|10|15
 
+enum cJsonParseStatus_t parseCJsonMessage(char *message)
+{
+	cJSON *json;
+	char *cJsonString = NULL;
+	enum cJsonParseStatus_t status = PARSE_FAIL;
 
-int parse_message(char *message)
+	json = cJSON_Parse(message);
+	if (json == NULL)
+	{
+	    const char *error_ptr = cJSON_GetErrorPtr();
+	    if (error_ptr != NULL)
+	    {
+	        fprintf(stderr, "Error before: %s\n", error_ptr);
+	    }
+	    status = PARSE_FAIL;
+	    goto end;
+	}
+
+	//show how many devices are modified
+	printf("json has %d devices are modified\r\n",cJSON_GetArraySize(json));
+	//json has child and json's child has child
+	if((json->child != NULL) && cJSON_IsObject(json->child))
+	{
+		cJsonString = cJSON_Print(json);
+		if(cJsonString != NULL)
+		{
+			printf("json message is :\r\n%s\r\n", cJsonString);
+			free(cJsonString);
+		}
+		else
+		{
+			printf("json has child number type, which is not supported to print yet\r\n");
+		}
+
+		/*get attributes of Lights*/
+		cJSON *Lights = cJSON_GetObjectItemCaseSensitive(json,"Lights");
+		if(cJSON_IsObject(Lights) && (Lights->child!= NULL))
+		{
+			//show how many attributes are changed in the Lights
+			printf("Lights has %d attributes are changed\r\n",cJSON_GetArraySize(Lights));
+			/*getting the attributes from lights*/
+			if(cJSON_HasObjectItem(Lights, "ON_OFF"))
+			{
+				cJSON *ON_OFF = cJSON_GetObjectItemCaseSensitive(Lights,"ON_OFF");
+
+				//if this is the deepest layer, it is cJSON string
+				if(cJSON_IsString(ON_OFF))
+				{
+					printf("cJSON object ON_OFF: %s\r\n",ON_OFF->valuestring);
+					if(strcmp(ON_OFF->valuestring, "ON")==0)
+					{
+						Light_state = MESH_GENERIC_ON_OFF_STATE_ON;
+						status = PARSE_SUCCESS;
+					}
+					else if(strcmp(ON_OFF->valuestring, "OFF")==0)
+					{
+						Light_state = MESH_GENERIC_ON_OFF_STATE_OFF;
+						status = PARSE_SUCCESS;
+					}
+					else
+					{
+						printf("parse error: The command is neither ON nor OFF\n");
+						status = PARSE_FAIL;
+					}
+				}
+				else
+				{
+					printf("error get ON_OFF \r\n");
+					status = PARSE_FAIL;
+					goto end;
+				}
+			}
+		}
+		else
+		{
+			printf("Message doesn't have Lights section \r\n");
+		}
+
+#if 0
+		printf("---------------------------------- 666666 \r\n");
+		/*get the switch device*/
+		cJSON *Switch = cJSON_GetObjectItemCaseSensitive(json,"Switch");
+		if(cJSON_IsObject(Switch) && (Switch->child!= NULL))
+		{
+			cJSON *Switch_value = cJSON_GetObjectItemCaseSensitive(Switch,"switch value");
+			if(cJSON_IsString(Switch_value))
+			{
+				printf("Switch value is %s/r/n",Switch_value->valuestring);
+			}
+			else{
+				printf("error get Switch_value \r\n");
+				cJSON_Delete(Switch_value);
+				goto end;
+			}
+			cJSON_Delete(Switch_value);
+		}
+#endif
+
+		goto end;
+	}
+	else
+	{
+		printf("The json object doesn't have a child\r\n");
+		status = PARSE_FAIL;
+		goto end;
+	}
+
+end:
+	if(json != NULL)
+		cJSON_Delete(json);
+
+	jsonCmdReceivedDone = false;
+
+	return status ;
+
+//	item1 = cJSON_GetObjectItem(json, "Lights");
+//	item2 = cJSON_GetObjectItem(item1, "ON_OFF");
+//	printf("------------- %s: %s\r\n", item2->string, item2->valuestring);
+//
+//	cJSON_Delete(json);
+//
+//	jsonCmdReceivedDone = false;
+//	return PARSE_SUCCESS;
+}
+
+enum cJsonParseStatus_t parse_message(char *message)
 {
 	printf("\n\n\n Received json message is: %s\r\n",message);
 	cJSON *json = cJSON_Parse(message);
 	char *out = NULL;
-	int status = FAIL;
-	//check if the parse success
+	enum cJsonParseStatus_t status = PARSE_FAIL;
+	//check if the parse PARSE_SUCCESS
     if (json == NULL)
     {
         const char *error_ptr = cJSON_GetErrorPtr();
@@ -577,13 +698,13 @@ int parse_message(char *message)
         {
             fprintf(stderr, "Error parse message, the message is not JSON: %s\n", error_ptr);
         }
-        status = FAIL;
+        status = PARSE_FAIL;
         goto end;
     }
     //show how many devices are modified
     printf("json has %d devices are modified\r\n",cJSON_GetArraySize(json));
 	//json has child and json's child has child
-	if((json->child!=NULL) && cJSON_IsObject(json->child))
+	if((json->child != NULL) && cJSON_IsObject(json->child))
 	{
 		out = cJSON_Print(json);
 		if(out!=NULL)
@@ -613,18 +734,18 @@ int parse_message(char *message)
 					{
 						printf("---------------------------------- 11111111 \r\n");
 						Light_state = MESH_GENERIC_ON_OFF_STATE_ON;
-						status = SUCCESS;
+						status = PARSE_SUCCESS;
 					}
 					else if(strcmp(ON_OFF->valuestring, "OFF")==0)
 					{
 						printf("---------------------------------- 222222 \r\n");
 						Light_state = MESH_GENERIC_ON_OFF_STATE_OFF;
-						status = SUCCESS;
+						status = PARSE_SUCCESS;
 					}
 					else
 					{
 						printf("parse error: The command is neither on nor off\n");
-						status = FAIL;
+						status = PARSE_FAIL;
 					}
 					printf("---------------------------------- 333333 \r\n");
 				}
@@ -632,7 +753,7 @@ int parse_message(char *message)
 				{
 					printf("error get ON_OFF \r\n");
 					printf("ON_OFF type is %d\r\n",ON_OFF->type);
-					status = FAIL;
+					status = PARSE_FAIL;
 					cJSON_Delete(ON_OFF);
 					goto end;
 				}
@@ -675,7 +796,7 @@ int parse_message(char *message)
 	else
 	{
 		printf("The json object doesn't have a child\r\n");
-		status = FAIL;
+		status = PARSE_FAIL;
 		goto end;
 	}
 	printf("---------------------------------- 888888 \r\n");
@@ -698,21 +819,21 @@ end:
 
 int generate_external_signal()
 {
-	int status = FAIL;
+	int status = PARSE_FAIL;
 	if(Light_state != INITIAL_COMMAND)
 	{
 		if(Light_state == MESH_GENERIC_ON_OFF_STATE_ON)
 		{
 			//produce an external signal
 			gecko_external_signal(EXTERNAL_SIGNAL_LIGHT_ON);
-			status = SUCCESS;
+			status = PARSE_SUCCESS;
 
 		}
 		else if(Light_state == MESH_GENERIC_ON_OFF_STATE_OFF )
 		{
 			//produce an external signal
 			gecko_external_signal(EXTERNAL_SIGNAL_LIGHT_OFF);
-			status = SUCCESS;
+			status = PARSE_SUCCESS;
 		}
 		else
 		{
@@ -725,7 +846,7 @@ int generate_external_signal()
 	else
 	{
 		printf("The Light_state is not valid value, light state won't change!\r\n");
-		status = FAIL;
+		status = PARSE_FAIL;
 	}
 //	if((lightness_percent != 0))
 //	{
@@ -739,12 +860,13 @@ void setCallBack()
 {
 	if(jsonCmdReceivedDone)
 	 {
-		int x = parse_message(rx_buffer);
+		enum cJsonParseStatus_t x = PARSE_FAIL;
+		x = parseCJsonMessage(rx_buffer);
 		printf("parse the JSON data, result %d\r\n", x);
-		if(x==SUCCESS)
+		if(x==PARSE_SUCCESS)
 		{
 			x = generate_external_signal();
-			if(x == SUCCESS)
+			if(x == PARSE_SUCCESS)
 			{
 				printf("Successfully generated external signal\r\n");
 			}
@@ -1694,10 +1816,9 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
         case TIME_ID_JSON_CMD_LOCAL_TEST:
         	printf("\n\n\nExecute the json cmd test locally.\r\n");
 
-        	jsonCmdTestIndex++;
         	jsonCmdTestIndex = jsonCmdTestIndex % (sizeof(jsonCmdTestPatern)/sizeof(jsonCmdTestPatern[0]));
         	memcpy(rx_buffer, jsonCmdTestPatern[jsonCmdTestIndex], strlen(jsonCmdTestPatern[jsonCmdTestIndex]));
-
+        	jsonCmdTestIndex++;
         	jsonCmdReceivedDone = true;
         	break;
 #endif
@@ -1757,6 +1878,21 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
     	struct gecko_msg_mesh_prov_ddb_list_evt_t *ddbRsp = (struct gecko_msg_mesh_prov_ddb_list_evt_t *)&(evt->data);
     	printf("###\r\n");
     	printf("evt: gecko_evt_mesh_prov_ddb_list_id, unicast address 0x%04x, number of elements %d \r\n", ddbRsp->address, ddbRsp->elements);
+
+// should start the local test if any device exist in this mesh network
+#ifdef JSON_CMD_LOCAL_TEST
+      if((ddbRsp->address != 0xFFFF) && startJsonCmdLocalTestLater)
+//	  if(startJsonCmdLocalTestLater)
+	  {
+		printf("Start json cmd local test \r\n");
+
+		sprintf(lcdBuffer, "Local Test ...");
+		LCD_write(lcdBuffer, LCD_ROW_LOCAL_TEST);
+
+		gecko_cmd_hardware_set_soft_timer(TIMER_MS_2_TIMERTICK(5000), TIME_ID_JSON_CMD_LOCAL_TEST, 0);
+	  }
+#endif
+
     	printf("###\r\n");
 
     }
@@ -2029,7 +2165,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
       printf("evt:gecko_evt_le_connection_opened_id\r\n");
       num_connections++;
       conn_handle = evt->data.evt_le_connection_opened.connection;
-      LCD_write("connected", LCD_ROW_CONNECTION);
+      LCD_write("connected", LCD_ROW_STATUS);
 
       if(state == connecting)
       {
@@ -2055,7 +2191,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
       conn_handle = 0xFF;
       if (num_connections > 0) {
         if (--num_connections == 0) {
-          LCD_write("", LCD_ROW_CONNECTION);
+          LCD_write("", LCD_ROW_STATUS);
         }
       }
       break;
@@ -2100,7 +2236,7 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
       printf("address: %x\r\n", initialized_evt->address);
       printf("ivi: %x\r\n", (unsigned int)initialized_evt->ivi);
 
-      LCD_write("provisioner", LCD_ROW_STATUS);
+      LCD_write("provisioner", LCD_ROW_NAME);
 
       if (initialized_evt->networks > 0) {
         printf("network keys already exist\r\n");
@@ -2166,20 +2302,6 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
       } else {
         printf("Failure - list nodes, result 0x%04x\r\n", listDDB_rsp->result);
       }
-
-// should start the local test if any device exist in this mesh network
-#ifdef JSON_CMD_LOCAL_TEST
-//    	if(ddbRsp->address != 0xFFFF)
-	  if(startJsonCmdLocalTestLater)
-	  {
-	  	printf("Start json cmd local test \r\n");
-
-	  	sprintf(lcdBuffer, "Local Test ...");
-	  	LCD_write(lcdBuffer, LCD_ROW_LOCAL_TEST);
-
-		gecko_cmd_hardware_set_soft_timer(TIMER_MS_2_TIMERTICK(5000), TIME_ID_JSON_CMD_LOCAL_TEST, 0);
-	  }
-#endif
 
       printf("Starting to scan for unprovisioned device beacons\r\n");
 
@@ -2284,18 +2406,17 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 				genericRequestEvt->parameters.len,
 				genericRequestEvt->parameters.data[0]);
 
-
-	  	if(genericRequestEvt->model_id == MESH_GENERIC_ON_OFF_SERVER_MODEL_ID)
-	  	{
-	  		enableLightSend = 2;
-	  		printf("enableLightSend flag is %d\r\n",enableLightSend);
-	  		printf("-----------------------------------------------\r\n");
+	  if(genericRequestEvt->model_id == MESH_GENERIC_ON_OFF_SERVER_MODEL_ID)
+		{
+			enableLightSend = 2;
+			printf("enableLightSend flag is %d\r\n",enableLightSend);
+			printf("-----------------------------------------------\r\n");
 
 			if(genericRequestEvt->parameters.data[0] == 0x01)
 				prepareToSendPacket(BUTTON_ADDRESS,"ON");
 			else
 				prepareToSendPacket(BUTTON_ADDRESS,"OFF");
-	  	}
+		}
 
       break;
     }
@@ -2329,14 +2450,13 @@ void handle_gecko_event(uint32_t evt_id, struct gecko_cmd_packet *evt)
 				genericClientServerStaEvt->parameters.len,
 				genericClientServerStaEvt->parameters.data[0]);
 
-
+  	  // After receiving the status from Lights indicates the status changed done, it will info the ESP32 and update the Thing Shadow.
 	  	if(genericClientServerStaEvt->model_id == MESH_GENERIC_ON_OFF_CLIENT_MODEL_ID)
 	  	{
-	  		if(enableLightSend > 0 )
+	  		if(enableLightSend > 0)
 	  		{
 	  			enableLightSend--;
 	  			printf("enableLightSend flag is %d\r\n",enableLightSend);
-	  			printf("-----------------------------------------------\r\n");
 	  		}
 	  		else
 	  		{

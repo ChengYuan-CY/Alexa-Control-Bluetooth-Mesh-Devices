@@ -63,7 +63,7 @@ void LCD_init(void)
 
   graphInit("SILICON LABORATORIES\nAlexa BTmesh Bridge\n\n");
 
-  LCD_write("initializing", LCD_ROW_STATUS);
+  LCD_write("Devices Information", LCD_DEVICE_INFO);
 }
 
 /*******************************************************************************
@@ -87,9 +87,9 @@ void LCD_write(char *str, uint8 row)
 
   sprintf(pRow, str);
 
-  if (row == LCD_ROW_LIGHTNESS) {
-    strcat(pRow, "%");
-  }
+//  if (row == LCD_ROW_LIGHTNESS) {
+//    strcat(pRow, "%");
+//  }
 
   LCD_message[0] = 0;
 

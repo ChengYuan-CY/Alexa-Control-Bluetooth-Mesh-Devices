@@ -44,11 +44,13 @@
  * Row number is passed as parameter, the possible values are defined below.
  ******************************************************************************/
 #define LCD_ROW_NAME         1    /**< 1st row, device name */
-#define LCD_ROW_STATUS       2    /**< 2nd row, node status */
-#define LCD_ROW_CONNECTION   3    /**< 3rd row, connection status */
 
-#define LCD_ROW_LIGHTNESS    5    /**< 5th row, lightness level */
+#define LCD_ROW_STATUS       2    /**< 2nd row, node status */
+#define LCD_DEVICE_INFO      3    /**< 3rd row, connection status */
+
+#define LCD_LIGHT_NUM        4    /**< 5th row, lightness level */
 #define LCD_ROW_PROV_STATUS  6    /**< 6th row, HSL hue */
+
 #define LCD_ROW_ESP_STATUS   7    /**< 7th row, HSL saturation */
 #define LCD_ROW_LOCAL_TEST   8	  /**< 8th row, local test */
 #define LCD_ROW_MAX          8    /**< total number of rows used */

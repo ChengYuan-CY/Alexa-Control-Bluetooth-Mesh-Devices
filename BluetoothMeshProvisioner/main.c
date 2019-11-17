@@ -231,6 +231,7 @@ int main(void)
 //  LEDS_init();
   button_init();
   uart_init();
+
   // Display Interface initialization
   DI_Init();
 
